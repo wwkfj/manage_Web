@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>门店内容管理</title>
+		<link rel="stylesheet" type="text/css" href="../../easyui/themes/metro/easyui.css" />
+		<link rel="stylesheet" type="text/css" href="../../easyui/themes/icon.css" />
+		<link rel="stylesheet" type="text/css" href="../../css/common.css" />
+		<script type="text/javascript" src="../../js/jquery-1.11.1.js"></script>
+		<script type="text/javascript" src="../../easyui/jquery.easyui.min.js"></script>
+		<script type="text/javascript" src="../../easyui/locale/easyui-lang-zh_CN.js"></script>
+		<script type="text/javascript" src="../../js/clientdata.js"></script>
+		<script type="text/javascript" src="../../js/common.js"></script>
+		<script type="text/javascript" src="../../js/CookieObj.js"></script>
+		<script type="text/javascript" src="../../js/oss.js"></script>
+
+		<script type="text/javascript">
+			var otherHeight = 163;
+			var titleHeight = 31;
+			var searchHeight = 128;
+			var searchHideheight = 102;
+			var messageResult = null;
+			var queryDiaWidth = queryDiaWidth;
+			var queryDiaHeight = queryDiaHeight;
+			var editDiaWidth = editDiaWidth;
+			var editDiaHeight = editDiaHeight;
+			var openType = null;
+			var systemId = systemId;
+			var pager;
+			var id = null;
+			var token = getQueryParam("token");
+			var userInfo;
+			var orgtype;
+			var orgID;
+			var orgname;
+
+			$(function() {
+
+				//初始化网格
+				$('#orgContentsGrid').datagrid({
+					height: ($(document).height() - otherHeight),
+					onLoadSuccess: function(data) {
+						$("#orgContentsGrid").datagrid('doCellTip', {
+							'max-width': '300px',
+							'delay': 500
+						});
+					}
+				});
+
+				//设置分页控件
+				pager = $('#orgContentsGrid').datagrid('getPager');
+				$(pager).pagination({
+					onSelectPage: query,
+					pageSize: 20,
+					pageList: [20, 50, 100, 200],
+					beforePageText: '第',
+					afterPageText: '页	共{pages}页',
+					displayMsg: '当前显示 {from} - {to} 条记录		共 {total} 条记录'
+				});
+
+				//初始化字典
+				var keyWords = "OTOBILLSTATUS,ORGCONTENTTYPE";
+				initWordBook(keyWords, "initList");
+
+				//内容类型为轮播图时，是否轮播图和排序为可选，否则为只读
+				//				$('#cbDlgDataType').combobox({   
+				//			        onChange:function(newValue,oldValue){   
+				//	                    if($('#cbDlgDataType').combobox('getValue')=='MADINAD'){
+				//		  　					　$('#txtDlgSortNo').numberbox('readonly',false);//去除txtDlgSortNo元素的readonly属性
+				//			             	 $('#dlgCheckAdFlag').attr('onclick','return true');//dlgCheckAdFlag设置为可选
+				//	                    }else{
+				//	                    	$('#txtDlgSortNo').numberbox('clear');//将txtDlgSortNo元素的值清空
+				//	                    	$('#txtDlgSortNo').numberbox('readonly',true);//将txtDlgSortNo元素设置为readonly
+				//	                    	$('#dlgCheckAdFlag').removeAttr('checked');//txtDlgSortNo元素设置不打勾
+				//                   		$('#dlgCheckAdFlag').attr('onclick','return false');//txtDlgSortNo元素设置不可选
+				//	                    }
+				//			        }   
+				//			    });  
+
+				//获取登录用户信息后,回调执行相应的业务
+				getUserInfoByToken(token, "initOrg");
+
+				query(); //初始化页面查询网格数据
+			});
+
+			/*初始化下拉列表*/
+			function initList() {
+					initCombobox('ORGCONTENTTYPE', 'cbDataType');
+					initCombobox('ORGCONTENTTYPE', 'cbDlgDataType');
+				}
+				//TODO
+				//判断是否选择为所有门店添加门店内容
+
+			function chDlgOrgNameShow() {
+
+				if (openType == '修改') return;
+				//ckDlgOrgName元素设置可选(适用于先选中了修改状态(不可选)，然后再点增加状态(可选))
+				$('#ckDlgOrgName').attr('onclick', 'return true');
+				if (document.getElementById("ckDlgOrgName").checked == false) {
+					$('#txtDlgOrgName').searchbox({
+						readonly: false
+					});
+					$('#txtDlgOrgName').searchbox('clear');
+					$('#txtDlgOrgName').searchbox({
+						editable: false
+					});
+				} else {
+					$('#txtDlgOrgName').searchbox({
+						readonly: true
+					});
+					$('#txtDlgOrgName').searchbox('setValue', '所有门店');
+				}
+				//清理orgContentDialog各个控件的值
+				$('#txtDlgOrgID').val('');
+				$('#txtDlgPageID').val('');
+				$('#txtDlgPageName').searchbox('clear');
+				$('#txtDlgPageUrl').val('');
+			}
+
+			 //搜索栏中的查询
+			function query() {
+
+				var pagerOptions = $(pager).pagination('options');
+				var PAGESIZE = pagerOptions.pageSize;
+				var PAGEINDEX = pagerOptions.pageNumber < 1 ? 1 : pagerOptions.pageNumber;
+
+				var map = {
+
+					ORGNAME: $('#txtOrgName').textbox('getValue'),
+					PAGENAME: $('#txtPageName').textbox('getValue'),
+					DATATYPE: $('#cbDataType').combobox('getValue'),
+					STATUS: $('#cbStatus').combobox('getValue'),
+					PAGEINDEX: PAGEINDEX,
+					PAGESIZE: PAGESIZE
+				}
+
+				var clientdata = new Clientdata({
+					clienttype: 1,
+					token: token,
+					code: 0,
+					systemid: systemId,
+					modulecode: '01300203'
+				});
+
+				clientdata.setSearchMap(map);
+
+				var cdStr = JSON.stringify(clientdata);
+
+				cdStr = encodeURI(cdStr);
+				var time = new Date();
+				var url = "/otoshop/?data=" + cdStr + "&time=" + time.getMilliseconds();
+
+				$.ajax({
+					type: "GET",
+					url: url,
+					headers: {
+						method: 'getOrgContents'
+					},
+					async: true,
+					processData: false, // 告诉jQuery不要去处理发送的数据
+					contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+					success: function(data, textStatus) {
+						//						alert("data="+data);
+						//字符串转对象
+						var parsedJson = jQuery.parseJSON(data);
+						var code = parsedJson.code;
+						var msg = parsedJson.msg;
+						if (code == 0) {
+							if (parsedJson.dataModel.lstOrgContents.length == 0) {
+								$('#orgContentsGrid').datagrid('loadData', {
+									total: 0,
+									rows: []
+								}); //清空网格数据
+								showInfo('查询结果为空');
+								return;
+							}
+							$('#orgContentsGrid').datagrid('loadData', {
+								"total": parsedJson.dataModel.rowCount,
+								"rows": parsedJson.dataModel.lstOrgContents
+							});
+						} else {
+							showInfo(msg);
+						}
+					},
+					error: function(XMLHttpRequest, textStatus, errorThrown) {
+						showError("访问服务失败");
+					}
+				});
+			}
+
+			 //搜索栏中的取消
+			function cancel() {
+				$('#txtOrgName').textbox('clear');
+				$('#txtPageName').textbox('clear');
+				$('#cbDataType').combobox('clear');
+				$('#dateStartTime').datebox('clear');
+				$('#dateEndTime').datebox('clear');
+				$('#cbStatus').combobox('clear');
+			}
+
+			 //格式化页面类型
+			function formateDateType(val, row, index) {
+				var dataType = row.dataType;
+				var display = getDisplayByValue('ORGCONTENTTYPE', dataType);
+				return display;
+			}
+
+			 //格式化页面类型
+			function formateStatus(val, row, index) {
+				var status = row.status;
+				var display = getDisplayByValue('OTOBILLSTATUS', status);
+				return display;
+			}
+
+			 //是否为轮播图（0：否，不打勾；1：是，打钩）
+			function formateAdFlag(val, row, index) {
+				var ck = null;
+				if (row.adFlag == 0) {
+					ck = "<input type=\"checkbox\" name=\"CKADFlag\" value=\"" + row.adFlag + "\" onclick=\"return false\">";
+				} else {
+					ck = "<input type=\"checkbox\" name=\"CKADFlag\" value=\"" + row.adFlag + "\" checked=\"true\" onclick=\"return false\">";
+				}
+				return ck;
+			}
+
+			 //TODO
+			 //初始化门店
+			function initOrg(userInfo) {
+				userInfo = userInfo;
+				orgtype = userInfo.orgtype;
+				orgname = userInfo.orgname;
+				orgID = userInfo.orgid;
+			}
+
+			 //添加门店内容弹出框
+			function addOrgContents() {
+
+				openType = '增加';
+				$('#orgContentsDialog').dialog({
+					title: openType + "门店内容"
+				});
+
+				$('#orgContentsDialog').dialog('open');
+
+				//清理shopServiceDialog各个控件的值
+				$('#ckDlgOrgName').attr('checked', false);
+
+				//清理orgContentsDialog各个控件的值
+				$('#dlgCheckAdFlag').attr('checked', false);
+				$('#txtDlgOrgID').val('');
+				$('#txtDlgPageID').val('');
+				$('#txtDlgPageName').searchbox('clear');
+				$('#cbDlgDataType').combobox('clear');
+				$('#txtDlgSortNo').numberbox('clear');
+				$('#txtDlgPicUrl').textbox('clear');
+				$('#txtDlgPageUrl').val('');
+				$('#txtDlgImage').attr('src', '../../img/fengmiantu.png');
+
+				//如果组织类型是门店，则只能添加自己门店内容，所以门店名称栏为只读
+				if (orgtype == 'S') {
+
+					//如果是门店，则隐藏为所有门店添加菜单的checkbox
+					$('#ckDlgOrgName').css({
+						display: "none"
+					});
+					$('#txtDlgOrgNameNote').css({
+						display: "none"
+					});
+					//不能选择其他门店，只能为自己门店添加菜单
+					$('#txtDlgOrgName').searchbox({
+						readonly: true
+					});
+					$('#txtDlgOrgName').searchbox('setValue', orgname);
+				} else {
+					//如果checkbox未被选中，则可以任意选择门店
+					if (document.getElementById("ckDlgOrgName").checked == false) {
+						$('#txtDlgOrgName').searchbox({
+							readonly: false
+						});
+						$('#txtDlgOrgName').searchbox('clear');
+					} else {
+						//如果checkbox被选中，则只能公共门店的菜单
+						$('#txtDlgOrgName').searchbox({
+							readonly: true
+						});
+						$('#txtDlgOrgName').searchbox('setValue', '所有门店');
+						$('#txtDlgOrgID').val('0');
+					}
+				}
+			}
+
+			 //查询要添加的部门，选择门店，显示组织机构弹出框
+			function searchOrgName() {
+
+				var url = "../public/dialog/ShopQueryDialog.html?confirmMethod=confirmShop&isSingleSelect=false&needAllshop=false"
+				url = encodeURI(url);
+				$('#iframeShop').attr('src', url);
+
+				$('#searchtitle').dialog({
+					height: queryDiaHeight,
+					width: queryDiaWidth,
+					closed: false
+				});
+			}
+
+			 //门店弹出框确认后的返回事件
+			function confirmShop(rows) {
+				var i = 0;
+				var orgnames;
+				var orgids;
+				for (i = 0; i < rows.length; i++) {
+					if (i == 0) {
+						orgnames = rows[0].orgName;
+						orgids = rows[0].orgID;
+					}
+					if (i != 0) {
+						orgnames = orgnames + "," + rows[i].orgName;
+						orgids = orgids + "," + rows[i].orgID;
+					}
+				}
+				/*var orgID = rows[0].orgID;
+				var orgName = rows[0].orgName;*/
+				$('#txtDlgOrgID').val(orgids);
+				$("#txtDlgOrgName").searchbox('setValue', orgnames);
+				$("#searchtitle").dialog("close");
+
+				//选择了门店必须清理其他信息，否则会导致门店与素材关联混乱
+				$('#txtDlgPageID').val('');
+				$('#txtDlgPageName').searchbox('clear');
+				//				$('#cbDlgDataType').combobox('clear');
+				//				$('#dlgCheckAdFlag').attr('checked',false);
+				//				$('#txtDlgSortNo').numberbox('clear');
+				//				$('#txtDlgPicUrl').textbox('clear');
+				$('#txtDlgPageUrl').val('');
+				//				$('#txtDlgImage').attr('src','../../img/fengmiantu.png');
+			}
+
+			 //添加页面素材弹出框
+			function searchPageContents() {
+
+				//1、如果类型是总部，
+				//--1.1当选中为指定门店添加时，如果没有选过门店，则不能选择素材 
+				//--1.2 当选中为所有门店添加时，则可以直接选择素材.
+				//2、如果类型是门店：如果没有选过门店，则不能选择素材
+				if (orgtype == 'D') {
+					if (document.getElementById("ckDlgOrgName").checked == false) {
+						if ($('#txtDlgOrgName').searchbox('getValue') == '') {
+							showError("请先选择门店名称");
+							return;
+						}
+					} else {
+						$('#txtDlgOrgName').searchbox('setValue', '所有门店');
+						$('#txtDlgOrgID').val('0');
+					}
+				} else {
+					if ($('#txtDlgOrgName').searchbox('getValue') == '') {
+						showError("请先选择门店名称");
+						return;
+					}
+				}
+				var url;
+				if (document.getElementById("ckDlgOrgName").checked == false) {
+					url = "../public/dialog/PageContentDialog.html?confirmMethod=onConfirmDialog&isSingleSelect=true&queryParam1=" + $('#txtDlgPageName').searchbox('getValue') + "&queryParam2=" + $('#txtDlgOrgID').val() + "&flag=1";
+				} else {
+					url = "../public/dialog/PageContentDialog.html?confirmMethod=onConfirmDialog&isSingleSelect=true&queryParam1=" + $('#txtDlgPageName').searchbox('getValue') + "&flag=1";
+				}
+
+				url = encodeURI(url);
+				$('#iframePageContents').attr('src', url);
+
+				$('#dlgPageContents').dialog({
+					width: queryDiaWidth,
+					height: queryDiaHeight,
+					closed: false
+				});
+			}
+
+			 //iframe确认后回调函数，将素材页面弹出框资料返回到添加门店弹出框上，然后关闭
+			function onConfirmDialog(param) {
+				$('#txtDlgPageID').val(param[0].id);
+				$('#txtDlgPageName').searchbox('setValue', param[0].pageName);
+				if (param[0].pageType == "0") {
+					$('#txtDlgPageUrl').val('');
+				} else {
+					$('#txtDlgPageUrl').val(param[0].note);
+				}
+				//将取出来的图片设定固定长宽
+				var picUrl = param[0].image1;
+				if (!isEmpty(picUrl)) {
+					var picUrlSuffix = picUrl.substring(picUrl.lastIndexOf('.'), picUrl.length);
+					picUrl = picUrl + '@900w_500h_1e_1c' + picUrlSuffix;
+					$('#txtDlgPicUrl').textbox('setValue', picUrl);
+					$('#txtDlgImage').attr('src', picUrl);
+				}
+				dialogClose(); //关闭添加页面内容弹出框
+			}
+
+			 //提交门店内容	
+			function submit() {
+
+				var adFlag = 0; //0：未选中，1：选中
+				if (orgtype == 'D') {
+					orgID = $('#txtDlgOrgID').val();
+				}
+				var orgName = $('#txtDlgOrgName').val();
+				var pageID = $('#txtDlgPageID').val();
+				var pageName = $('#txtDlgPageName').searchbox('getValue');
+				var dataType = $('#cbDlgDataType').combobox('getValue');
+
+				if (document.getElementById("dlgCheckAdFlag").checked == false) {
+					adFlag = 0;
+				} else {
+					adFlag = 1;
+				}
+
+				var sortNo = $('#txtDlgSortNo').val();
+				var picUrl = $('#txtDlgPicUrl').val();
+				var pageUrl = $('#txtDlgPageUrl').val();
+
+				if (sortNo == '' || sortNo == null) {
+					sortNo = 0;
+				}
+
+				//字段检查
+				if (orgName == '' || orgName == null) {
+					showError("门店名称不能为空");
+					return;
+				}
+				if (pageName == '' || pageName == null) {
+					showError("素材标题不能为空");
+					return;
+				}
+				if (dataType == '' || dataType == null) {
+					showError("内容类型不能为空");
+					return;
+				}
+				if (picUrl == '' || picUrl == null) {
+					showError("图片Url不能为空");
+					return;
+				}
+
+				var orgContents = {
+					id: id,
+					orgID: orgID,
+					orgName: orgName,
+					pageID: pageID,
+					pageName: pageName,
+					dataType: dataType,
+					adFlag: adFlag,
+					sortNo: sortNo,
+					picUrl: picUrl,
+					pageUrl: pageUrl,
+					status: '0'
+				}
+
+				var orgContentsModel = {
+					modelclass: "com.zjlh.model.wx.model.shop.OrgContentsModel",
+					orgContents: orgContents
+				}
+
+				var clientdata = new Clientdata({
+					clienttype: 1,
+					token: token,
+					code: 0,
+					systemid: systemId,
+					modulecode: '01300203'
+				});
+				clientdata.setDataModel(orgContentsModel);
+
+				//将ClientData转为对象
+				var cdStr = JSON.stringify(clientdata);
+				var url = "/otoshop";
+				var method = null;
+				if (openType == '增加') {
+					method = 'addOrgContents';
+				} else {
+					method = 'updateOrgContents';
+				}
+				//调用Ajax发送请求
+				$.ajax({
+					type: "POST",
+					url: url,
+					data: cdStr,
+					headers: {
+						method: method
+					},
+					async: true,
+					processData: false, // 告诉jQuery不要去处理发送的数据
+					contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+					success: function(data, textStatus) {
+						//字符串转对象
+						var parsedJson = jQuery.parseJSON(data);
+						messageResult = parsedJson.msg;
+						if (parsedJson.code == 0) {
+							query(); //重新查询数据
+							dialogOrgContentsClose(); //关闭页面素材弹出框
+							gridReload(); //重新加载网格
+						} else {
+							showError(messageResult);
+						}
+					},
+					error: function(XMLHttpRequest, textStatus, errorThrown) {
+						showError("访问服务失败");
+					}
+				});
+			}
+
+			 //关闭添加页面内容弹出框
+			function dialogOrgContentsClose() {
+				$('#orgContentsDialog').dialog('close');
+			}
+
+			 //关闭弹出框
+			function dialogClose() {
+				$('#dlgPageContents').dialog('close');
+			}
+
+			/*网格重新加载*/
+			function gridReload() {
+				$('#orgContentsGrid').datagrid('reload');
+			}
+
+			 //上传图片控件
+			function onUploadImage(url) {
+				//将取出来的图片设定固定长宽
+				if (!isEmpty(url)) {
+					var picUrlSuffix = url.substring(url.lastIndexOf('.'), url.length);
+					url = url + '@900w_500h_1e_1c' + picUrlSuffix;
+				}
+				$('#txtDlgPicUrl').textbox('setValue', url);
+				$('#txtDlgImage').attr('src', url);
+			}
+
+			 //修改门店内容
+			function updateOrgContent() {
+
+				var rows = $('#orgContentsGrid').datagrid('getChecked');
+				if (rows == null || rows.length == 0) {
+					showError('请选择行');
+					return;
+				}
+				openType = '修改';
+				$('#orgContentsDialog').dialog({
+					title: openType + '门店内容'
+				})
+
+				//某些组件的内容不允许改动
+				$('#ckDlgOrgName').attr('onclick', 'return false'); //ckDlgOrgName元素设置不可选
+				$('#txtDlgOrgName').searchbox({
+					readonly: true
+				});
+				id = rows[0].id;
+				$('#txtDlgOrgID').val(rows[0].orgID);
+				$('#txtDlgOrgName').searchbox('setValue', rows[0].orgName);
+				$('#txtDlgPageID').val(rows[0].pageID);
+				$('#txtDlgPageUrl').val(rows[0].pageUrl); //TODO
+				$('#txtDlgPageName').searchbox('setValue', rows[0].pageName);
+				$('#cbDlgDataType').combobox('setValue', rows[0].dataType);
+				var adFlag = rows[0].adFlag;
+				if (adFlag == 0) {
+					document.getElementById("dlgCheckAdFlag").checked = false;
+				} else if (adFlag == 1) {
+					document.getElementById("dlgCheckAdFlag").checked = true;
+				}
+				$('#txtDlgSortNo').textbox('setValue', rows[0].sortNo);
+				$('#txtDlgPicUrl').textbox('setValue', rows[0].picUrl);
+				$('#txtDlgImage').attr('src', rows[0].picUrl);
+
+				$('#orgContentsDialog').dialog('open'); //打开门店内容弹出框
+			}
+
+			function deleteOrgContents() {
+				var rows = $('#orgContentsGrid').datagrid('getChecked');
+				if (rows == null || rows.length == 0) {
+					showError('请选择行');
+					return;
+				}
+				id = rows[0].id;
+
+				var orgContents = {
+					id: id
+				}
+
+				var orgContentsModel = {
+					modelclass: "com.zjlh.model.wx.model.shop.OrgContentsModel",
+					orgContents: orgContents
+				}
+
+				var clientdata = new Clientdata({
+					clienttype: 1,
+					token: token,
+					code: 0,
+					systemid: systemId,
+					modulecode: '01300203'
+				});
+				clientdata.setDataModel(orgContentsModel);
+
+				//将ClientData转为对象
+				var cdStr = JSON.stringify(clientdata);
+				var url = "/otoshop";
+
+				//调用Ajax发送请求
+				$.ajax({
+					type: "POST",
+					url: url,
+					data: cdStr,
+					headers: {
+						method: 'deleteOrgContents'
+					},
+					async: true,
+					processData: false, // 告诉jQuery不要去处理发送的数据
+					contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+					success: function(data, textStatus) {
+
+						//字符串转对象
+						var parsedJson = jQuery.parseJSON(data);
+						messageResult = parsedJson.msg;
+						if (parsedJson.code == 0) {
+							query(); //重新查询数据
+							dialogOrgContentsClose(); //关闭页面素材弹出框
+							gridReload(); //重新加载网格
+							showInfo('禁用成功');
+						} else {
+							showError(messageResult);
+						}
+					},
+					error: function(XMLHttpRequest, textStatus, errorThrown) {
+						showError("访问服务失败");
+					}
+				});
+			}
+
+			function exportOrgContents() {
+					var cols = $("#orgContentsGrid").datagrid('getColumnFields');
+					var fields = [];
+					var k=0;
+					for (var field = 0; field < cols.length; field++) {
+						fields[k] = $("#orgContentsGrid").datagrid('getColumnOption', cols[field]).title;
+						if(isEmpty(fields[k]))
+							continue;
+						k++;
+					}
+	
+					var map = {
+						ORGNAME: $('#txtOrgName').textbox('getValue'),
+						PAGENAME: $('#txtPageName').textbox('getValue'),
+						DATATYPE: $('#cbDataType').combobox('getValue'),
+						STATUS: $('#cbStatus').combobox('getValue')
+					}
+	
+					var gridModel = {
+						name: "门店内容数据表",
+						token: token,
+						titles: fields,
+						classname: 'com.zjlh.manage.wx.shop.ShopManage',
+						searchmap: map,
+						method: 'getOrgContents'
+					};
+					var clinetDataStr = JSON.stringify(gridModel);
+					clinetDataStr = encodeURI(clinetDataStr);
+					var time = new Date();
+					var url = "/oto/file/export-file?data=" + clinetDataStr + "&time=" + time.getMilliseconds();
+					window.open(url,'_blank');
+					
+				}
+		</script>
+	</head>
+
+	<body class="easyui-layout" data-options="fit:true">
+		<!-- 标题 -->
+		<div class="headerTitle">
+			<font>门店内容管理</font>
+			<a href="">模块帮助</a>
+		</div>
+
+		<!-- 查询条件 -->
+		<div class="searchPanel">
+			<div class="row">
+				<div class="leftCell">
+					<font>门店名称:</font>
+				</div>
+				<div class="rightCell">
+					<input id="txtOrgName" class="easyui-textbox" type="text" style="width:100%" />
+				</div>
+				<div class="leftCell">
+					<font>内容标题:</font>
+				</div>
+				<div class="rightCell">
+					<input id="txtPageName" class="easyui-textbox" type="text" style="width:100%" />
+				</div>
+				<div class="leftCell"><font>状态:</font>
+				</div>
+				<div class="rightCell">
+					<select id="cbStatus" class="easyui-combobox" style="width:100%;" data-options="editable:false">
+						<option value="0">有效</option>
+						<option value="S">无效</option>
+					</select>
+				</div>
+				<div class="leftCell">
+					<font>内容类型:</font>
+				</div>
+				<div class="rightCell">
+					<input id="cbDataType" class="easyui-combobox" type="text" style="width:100%" data-options="editable:false" />
+				</div>
+			</div>
+			<div class="row">
+				<div style="width:20%;min-width:120px;height:30px;float:right;text-align:right;margin-right: 27px;">
+					<a href="javascript:query()" class="easyui-linkbutton" data-options="iconCls:'icon-oto-search'">查询</a>
+					<a href="javascript:cancel()" class="easyui-linkbutton" data-options="iconCls:'icon-oto-reset'">重置</a>
+				</div>
+				<div style="clear:both"></div>
+			</div>
+		</div>
+
+		<!-- 网格标题 -->
+		<div class="gridTitle">
+			<font class="titleNameFont">明细信息</font>
+		</div>
+
+		<!-- 网格按钮栏 -->
+		<div class="gridBtnBar">
+			<a href="javascript:addOrgContents()" class="easyui-linkbutton" iconCls="icon-oto-add" plain="true">新增</a>
+			<a href="javascript:updateOrgContent()" class="easyui-linkbutton" iconCls="icon-oto-edit" plain="true">修改</a>
+			<a href="javascript:deleteOrgContents()" class="easyui-linkbutton" iconCls="icon-oto-delete" plain="true">删除</a>
+			<a href="javascript:exportOrgContents()" class="easyui-linkbutton" iconCls="icon-oto-export" plain="true">导出</a>
+		</div>
+		<!-- 网格 -->
+		<table id="orgContentsGrid" class="easyui-datagrid" style="width:100%;height:500px" data-options="singleSelect:true,pagination:true,remoteSort:false">
+			<thead>
+				<tr>
+					<th data-options="field:'ck',checkbox:true"></th>
+					<th data-options="field:'orgName',width:'15%',sortable:true">门店名称</th>
+					<th data-options="field:'orgCode',width:'10%',sortable:true">门店编码</th>
+					<th data-options="field:'pageName',width:'25%',sortable:true">内容标题</th>
+					<th data-options="field:'dataType',width:'10%',formatter:formateDateType,sortable:true">内容类型</th>
+					<th data-options="field:'adFlag',width:'5%',formatter:formateAdFlag,sortable:true">轮播图</th>
+					<th data-options="field:'createDate',width:'15%',sortable:true">创建时间</th>
+					<th data-options="field:'createEmpName',width:'10%',sortable:true">创建人姓名</th>
+					<th data-options="field:'status',width:'7%',formatter:formateStatus,sortable:true">状态</th>
+				</tr>
+			</thead>
+		</table>
+
+		<!--查询页面素材弹出框-->
+		<div id="dlgPageContents" class="easyui-dialog" closed="true" background-color: #FFFFFF; " align="center" data-options="modal:true,resizable:true,title: '页面素材查询弹出框' ">
+			<iframe id="iframePageContents" width="99%" height="99%" scrolling="no" frameborder="0"></iframe>
+		</div>
+		
+		<!--门店查询框-->
+		<div id="searchtitle" class="easyui-dialog" closed="true" title="门店查询 " data-options="buttons: '#btnpanel1',resizable:true,modal:true">
+			<iframe id="iframeShop" width="100%" height="99%" scrolling="no" frameborder="0"></iframe>
+		</div>
+		
+		<!--添加门店内容弹出框-->
+		<div id="orgContentsDialog" class="easyui-dialog" closed="true" title: "页面内容" style="width:520px;height:460px; " data-options="buttons: '#dlg-buttons',modal:true ">
+			<table style="padding-left:15px;padding-right:15px; padding-top:10px;">
+			<tr style="margin-bottom: 10px;">
+				<td></td>
+				<td colspan="3" align="left">
+					<input type="checkbox" id="ckDlgOrgName" onchange="chDlgOrgNameShow()" />
+					<span id="txtDlgOrgNameNote">为所有门店添加门店内容(选择该项后,不需选择【门店名称】)</span>
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<input id="txtDlgOrgID" type="hidden" />
+				<td align="right"><font color="#FF0000">*</font>门店名称:</td>
+				<td colspan="3" align="left">
+					<input class="easyui-searchbox" id="txtDlgOrgName" style="width: 394px;" searcher="searchOrgName" data-options="editable:false" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>内容标题:</td>
+				<td align="left" colspan="3">
+					<input type="text" class="easyui-searchbox" id="txtDlgPageName" style="width: 394px;" searcher="searchPageContents" data-options="editable:false" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<input id="txtDlgPageID" type="hidden" />
+				<input id="txtDlgPageUrl" type="hidden" />
+				<td align="right"><font color="#FF0000">*</font>内容类型:</td>
+				<td align="left" colspan="3">
+					<input type="text" class="easyui-combobox" id="cbDlgDataType" style="width: 394px;" data-options="editable:false" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>是否轮播图:</td>
+				<td align="left" style="width: 150px;">
+					<input type="checkbox" id="dlgCheckAdFlag" />
+				</td>
+				<td><span>轮播图序号:</span>
+					<input type="text" class="easyui-numberbox" id="txtDlgSortNo" style="width: 172px;" data-options="validType:'number'" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>图片Url:</td>
+				<td width="320px" align="left" colspan="3">
+					<input type="text" class="easyui-textbox" id="txtDlgPicUrl" style="width: 394px;" data-options="editable:false" />
+				</td>
+			</tr>
+			<tr style="height: 55px; text-align: center;">
+				<td align="right"></td>
+				<td width="394px" align="left" colspan="3">
+					<iframe width="100%" height="35px" scrolling="no" frameborder="0" src="../public/ossupload.html?command=onUploadImage"></iframe>
+					<br><span>图片大小必须为900*500像素</span>
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td></td>
+				<td align="left" colspan="3">
+					<img id="txtDlgImage" width="300px" height="167px" src="../../img/fengmiantu.png" />
+				</td>
+			</tr>
+			</table>
+		</div>
+		<div id="dlg-buttons">
+			<a href="javascript:submit()" class="easyui-linkbutton" iconCls="icon-oto-save">保存</a>
+			<a href="javascript:dialogOrgContentsClose()" class="easyui-linkbutton" iconCls="icon-oto-delete">关闭</a>
+		</div>
+
+	</body>
+
+</html>

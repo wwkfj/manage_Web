@@ -1,0 +1,98 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+	<meta name="renderer" content="webkit|ie-comp|ie-stand">
+	<meta name="keywords" content="用户管理">
+	<meta name="description" content="后台管理系统。">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta http-equiv="Cache-Control" content="no-siteapp" />
+    <title>用户管理</title>
+    <link rel="stylesheet" type="text/css" href="../../easyui/themes/metro/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="../../easyui/themes/icon.css" />
+	<link rel="stylesheet" type="text/css" href="../../css/common.css" />
+	<script type="text/javascript" src="../../js/jquery-1.11.1.js"></script>
+	<script type="text/javascript" src="../../easyui/jquery.easyui.min.js"></script>
+	<script type="text/javascript" src="../../easyui/locale/easyui-lang-zh_CN.js"></script>
+  </head>
+  <script>
+  	
+  </script>
+  
+  <body>
+	<!-- 标题 -->
+		<div class="headerTitle">
+			<font>用户管理</font>
+			<!--<a href="">模块帮助</a>-->
+		</div>
+
+		<!-- 查询条件 -->
+		<div class="searchPanel">
+			<div class="row">
+				<div class="leftCell">
+					<font>用户名称:</font>
+				</div>
+				<div class="rightCell">
+					<input id="txtOrgName" class="easyui-textbox" type="text" style="width:100%" />
+				</div>
+				<div class="leftCell">
+					<font>部门:</font>
+				</div>
+				<div class="rightCell">
+					<input id="txtPageName" class="easyui-textbox" type="text" style="width:100%" />
+				</div>
+				<div class="leftCell"><font>状态:</font>
+				</div>
+				<div class="rightCell">
+					<select id="cbStatus" class="easyui-combobox" style="width:100%;" data-options="editable:false">
+						<option value="0">有效</option>
+						<option value="S">无效</option>
+					</select>
+				</div>
+				<div class="leftCell">
+					<font>用户类型:</font>
+				</div>
+				<div class="rightCell">
+					<input id="cbDataType" class="easyui-combobox" type="text" style="width:100%" data-options="editable:false" />
+				</div>
+			</div>
+			<div class="row">
+				<div style="width:20%;min-width:120px;height:30px;float:right;text-align:right;margin-right: 27px;">
+					<a href="javascript:query()" class="easyui-linkbutton" data-options="iconCls:'icon-oto-search'">查询</a>
+					<a href="javascript:cancel()" class="easyui-linkbutton" data-options="iconCls:'icon-oto-reset'">重置</a>
+				</div>
+				<div style="clear:both"></div>
+			</div>
+		</div>
+
+		<!-- 网格标题 -->
+		<div class="gridTitle">
+			<font class="titleNameFont">明细信息</font>
+		</div>
+
+		<!-- 网格按钮栏 -->
+		<div class="gridBtnBar">
+			<a href="javascript:addOrgContents()" class="easyui-linkbutton" iconCls="icon-oto-add" plain="true">新增</a>
+			<a href="javascript:updateOrgContent()" class="easyui-linkbutton" iconCls="icon-oto-edit" plain="true">修改</a>
+			<a href="javascript:deleteOrgContents()" class="easyui-linkbutton" iconCls="icon-oto-delete" plain="true">删除</a>
+			<a href="javascript:exportOrgContents()" class="easyui-linkbutton" iconCls="icon-oto-export" plain="true">导出</a>
+		</div>
+		<!-- 网格 -->
+		<table id="orgContentsGrid" class="easyui-datagrid" style="width:100%;height:300px" data-options="singleSelect:true,pagination:true,remoteSort:false">
+			<thead>
+				<tr>
+					<th data-options="field:'ck',checkbox:true"></th>
+					<th data-options="field:'orgName',width:'15%',sortable:true">用户名称</th>
+					<th data-options="field:'orgCode',width:'10%',sortable:true">用户编码</th>
+					<th data-options="field:'pageName',width:'25%',sortable:true">部门</th>
+					<th data-options="field:'dataType',width:'10%',sortable:true">用户类型</th>
+					<th data-options="field:'adFlag',width:'5%',sortable:true">角色</th>
+					<th data-options="field:'createDate',width:'15%',sortable:true">创建时间</th>
+					<th data-options="field:'createEmpName',width:'10%',sortable:true">创建人姓名</th>
+					<th data-options="field:'status',width:'7%',sortable:true">状态</th>
+				</tr>
+			</thead>
+		</table>
+  </body>
+</html>
