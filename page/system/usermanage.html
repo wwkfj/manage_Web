@@ -17,13 +17,37 @@
 	<script type="text/javascript" src="../../easyui/locale/easyui-lang-zh_CN.js"></script>
   </head>
   <script>
-  	
+  	(function(){
+  		debugger
+  		var width = $("document").width
+  		$("body").css("width","200px");
+  	})
+  	 //关闭添加页面内容弹出框
+	function dialogOrgContentsClose() {
+		$('#orgContentsDialog').dialog('close');
+	}
+	 //关闭添加页面内容弹出框
+	function dialogOrgContentsOpen() {
+		$('#orgContentsDialog').dialog('open');
+	}
+	
+	 //关闭添加页面内容弹出框
+	function addOrgContents() {
+		
+		
+		$('#orgContentsDialog').dialog({
+			title:"添加用户"
+		});
+		$('#orgContentsDialog').dialog('open');
+		
+	}
+	
   </script>
   
   <body>
 	<!-- 标题 -->
 		<div class="headerTitle">
-			<font>用户管理</font>
+			<font>用户管理11</font>
 			<!--<a href="">模块帮助</a>-->
 		</div>
 
@@ -79,20 +103,76 @@
 			<a href="javascript:exportOrgContents()" class="easyui-linkbutton" iconCls="icon-oto-export" plain="true">导出</a>
 		</div>
 		<!-- 网格 -->
-		<table id="orgContentsGrid" class="easyui-datagrid" style="width:100%;height:300px" data-options="singleSelect:true,pagination:true,remoteSort:false">
+		<table id="orgContentsGrid" class="easyui-datagrid" style="width:100%;height:100%" data-options="singleSelect:true,pagination:true,remoteSort:false">
 			<thead>
 				<tr>
 					<th data-options="field:'ck',checkbox:true"></th>
-					<th data-options="field:'orgName',width:'15%',sortable:true">用户名称</th>
-					<th data-options="field:'orgCode',width:'10%',sortable:true">用户编码</th>
-					<th data-options="field:'pageName',width:'25%',sortable:true">部门</th>
-					<th data-options="field:'dataType',width:'10%',sortable:true">用户类型</th>
-					<th data-options="field:'adFlag',width:'5%',sortable:true">角色</th>
-					<th data-options="field:'createDate',width:'15%',sortable:true">创建时间</th>
-					<th data-options="field:'createEmpName',width:'10%',sortable:true">创建人姓名</th>
+					<th data-options="field:'userIdx',width:'4%',sortable:true">序号</th>
+					<th data-options="field:'userNo',width:'10%',sortable:true">用户工号</th>
+					<th data-options="field:'name',width:'8%',sortable:true">用户姓名</th>
+					<th data-options="field:'userName',width:'10%',sortable:true">登录帐号</th>
+					<th data-options="field:'deptName',width:'15%',sortable:true">所属部门</th>
+					<th data-options="field:'roleName',width:'15%',sortable:true">当前岗位</th>
+					<th data-options="field:'createDate',width:'12%',sortable:true">入职时间</th>
+					<th data-options="field:'joinDate',width:'12%',sortable:true">上次登录时间</th>
 					<th data-options="field:'status',width:'7%',sortable:true">状态</th>
 				</tr>
 			</thead>
 		</table>
+		
+		<!--添加用户内容弹出框-->
+		<div id="orgContentsDialog" class="easyui-dialog" closed="true" title: "页面内容" style="width:520px;height:460px; " data-options="buttons: '#dlg-buttons',modal:true ">
+			<table style="padding-left:15px;padding-right:15px; padding-top:10px;">
+			<tr style="margin-bottom: 10px;">
+				<input id="txtDlgOrgID" type="hidden" />
+				<td align="right"><font color="#FF0000">*</font>门店名称:</td>
+				<td colspan="3" align="left">
+					<input class="easyui-searchbox" id="txtDlgOrgName" style="width: 394px;" data-options="editable:false" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>内容标题:</td>
+				<td align="left" colspan="3">
+					<input type="text" class="easyui-searchbox" id="txtDlgPageName" style="width: 394px;" data-options="editable:false" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<input id="txtDlgPageID" type="hidden" />
+				<input id="txtDlgPageUrl" type="hidden" />
+				<td align="right"><font color="#FF0000">*</font>内容类型:</td>
+				<td align="left" colspan="3">
+					<input type="text" class="easyui-combobox" id="cbDlgDataType" style="width: 394px;" data-options="editable:false" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>是否轮播图:</td>
+				<td align="left" style="width: 150px;">
+					<input type="checkbox" id="dlgCheckAdFlag" />
+				</td>
+				<td><span>轮播图序号:</span>
+					<input type="text" class="easyui-numberbox" id="txtDlgSortNo" style="width: 172px;" data-options="validType:'number'" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>图片Url:</td>
+				<td width="320px" align="left" colspan="3">
+					<input type="text" class="easyui-textbox" id="txtDlgPicUrl" style="width: 394px;" data-options="editable:false" />
+				</td>
+			</tr>
+			<!--<tr style="height: 55px; text-align: center;">
+				<td align="right"></td>
+				<td width="394px" align="left" colspan="3">
+					<iframe width="100%" height="35px" scrolling="no" frameborder="0" src="../public/ossupload.html?command=onUploadImage"></iframe>
+					<br><span>图片大小必须为900*500像素</span>
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td></td>
+				<td align="left" colspan="3">
+					<img id="txtDlgImage" width="300px" height="167px" src="../../img/fengmiantu.png" />
+				</td>
+			</tr>-->
+			</table>
+		</div>
   </body>
 </html>
