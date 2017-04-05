@@ -1,0 +1,334 @@
+<!DOCTYPE HTML>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+		<meta name="renderer" content="webkit|ie-comp|ie-stand">
+		<meta name="keywords" content="用户管理">
+		<meta name="description" content="后台管理系统。">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta http-equiv="Cache-Control" content="no-siteapp" />
+		<title>组织管理</title>
+		<link rel="stylesheet" type="text/css" href="../../easyui/themes/metro/easyui.css" />
+		<link rel="stylesheet" type="text/css" href="../../easyui/themes/icon.css" />
+		<link rel="stylesheet" type="text/css" href="../../css/common.css" />
+		<script type="text/javascript" src="../../js/jquery-1.11.1.js"></script>
+		<script type="text/javascript" src="../../easyui/jquery.easyui.min.js"></script>
+		<script type="text/javascript" src="../../easyui/locale/easyui-lang-zh_CN.js"></script>
+		<script type="text/javascript" src="../../js/common.js"></script>
+
+		<script type="text/javascript">
+			var otherHeight = 163;
+			var titleHeight = 31;
+			var messageResult = null;
+			var queryDiaWidth = queryDiaWidth;
+			var queryDiaHeight = queryDiaHeight;
+			var editDiaWidth = editDiaWidth;
+			var editDiaHeight = editDiaHeight;
+			var openType = null;
+			var lastIndex;
+
+			$(function() {
+				//初始化网格
+				$('#orgContentsGrid').treegrid({
+					onClickRow: function(node) {
+						checkHasEdit();
+					},
+					onDblClickRow: function(node) {
+						checkHasEdit();
+						edit();
+					},
+					onBeforeExpand: function(node) {
+						checkHasEdit();
+					},
+					onExpand: function(node) {
+						checkHasEdit();
+					},
+					onCollapse: function(node) {
+
+					},
+
+					onBeforeEdit: function(row) {
+						var libraryCoclum = $('#orgContentsGrid').treegrid('getColumnOption', 'activation');
+ 						var checkboxOptionsObj = new Object();
+						checkboxOptionsObj.on = '1';
+						checkboxOptionsObj.off = '0';
+						var checkboxEditorObj = new Object();
+						checkboxEditorObj.type = 'checkbox';
+						checkboxEditorObj.options = checkboxOptionsObj;
+						libraryCoclum.editor = checkboxEditorObj;
+					},
+					onAfterEdit: function(row, changes) {
+						save(row);
+					}
+
+				});
+				query(); //初始化页面查询网格数据
+			});
+
+			function checkHasEdit() {
+				if(lastIndex != undefined) {
+					var row = $('#orgContentsGrid').treegrid('select', lastIndex);
+					showInfo("请先保存或者编辑行！");
+					return;
+				}
+			};
+
+			function edit() {
+				var node = $('#orgContentsGrid').treegrid('getSelected');
+				lastIndex = node.id;
+				$('#orgContentsGrid').treegrid('beginEdit', node.id);
+			}
+
+			function cancel() {
+				if(lastIndex != undefined) {
+					var index = lastIndex;
+					lastIndex = undefined;
+					var row = $('#orgContentsGrid').treegrid('cancelEdit', index);
+					return;
+				}
+				showInfo("没有可编辑的行");
+
+			}
+
+			function add() {
+				var row = $('#orgContentsGrid').treegrid('getSelected');
+				if(row) {
+					$('#orgContentsGrid').treegrid('append', {
+						parent: row.id, //treegrid 父id 必须指定
+						data: [{
+							orgName: '',
+							orgCode: '',
+							sequence: 50
+						}]
+					});
+					$('#orgContentsGrid').treegrid('beginEdit', obj_editingId);
+				} else {
+
+				}
+			}
+
+			function formatcheckbox(val, row) {
+				if(val)
+					return "<input type=\"checkbox\" id=\"checkbox_ac" + row.id + "\"  value=\"" + val + "\" checked=\"true\" onclick=\"return false\"  onchange=\"confirmActivationInfo(" + row.id + "," + false + ")\">";
+				else
+					return "<input type=\"checkbox\"  id=\"checkbox_ac" + row.id + "\" value=\"" + val + "\"   onclick=\"return false\" onchange=\"confirmActivationInfo(" + row.id + "," + true + ")\">";
+			}
+
+			function deleteOrg() {
+				var row = $('#orgContentsGrid').treegrid('getSelected');
+				var time = new Date();
+				var url = "/api/system/org/delete/" + row.id;
+
+				$.ajax({
+					type: "DELETE",
+					url: url,
+					async: true,
+					processData: false, // 告诉jQuery不要去处理发送的数据
+					contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+					success: function(data, textStatus) {
+						//字符串转对象
+						var code = data.code;
+						if(code == 0) {
+							$('#orgContentsGrid').treegrid('remove', row.id);
+							showInfo('删除成功');
+						} else {
+							showInfo(msg);
+						}
+
+					},
+					error: function(XMLHttpRequest, textStatus, errorThrown) {
+						showError("访问服务失败");
+					}
+				});
+			}
+
+			//确认弹出框;
+			function confirmActivationInfo(rowid, activation) {
+				//	$('#checkbox_ac' + rowid).attr("checked", true);
+				jQuery.messager.confirm('提示:', activation ? '你确认要激活吗?' : '你确认要取消激活吗', function(event) {
+					if(event) {
+						activationOrg(rowid, activation);
+					} else {
+						alert($("#checkbox_ac" + rowid).attr('checked'))
+						$('#checkbox_a' + rowid).attr("checked", 'true');
+
+					}
+				});
+			}
+
+			//确认弹出框;
+			function confirmDeleteInfo() {
+				if(lastIndex != undefined) {
+					showInfo("请先保存或者取消编辑行！")
+					return;
+				}
+				jQuery.messager.confirm('提示:', '你确认要删除吗?', function(event) {
+					if(event) {
+						deleteOrg();
+					} else {
+						alert("你点击的是false");
+					}
+				});
+			}
+
+			function activationOrg(rowid, activation) {
+				var params = {
+					activation: activation,
+					id: rowid
+				}
+				//调用Ajax发送请求
+				$.ajax({
+					type: "PUT",
+					url: '/api/system/org/update',
+					data: JSON.stringify(params),
+					async: true,
+					processData: false, // 告诉jQuery不要去处理发送的数据
+					contentType: 'application/json;charset=UTF-8', // 告诉jQuery不要去设置Content-Type请求头
+					success: function(data, textStatus) {
+						//字符串转对象
+
+					},
+					error: function(XMLHttpRequest, textStatus, errorThrown) {
+						showError("访问服务失败");
+					}
+				});
+			}
+
+			function endEdit() {
+				if(lastIndex == undefined) {
+					showInfo("没有数据需要保存");
+					return;
+				}
+				$('#orgContentsGrid').treegrid('endEdit', lastIndex);
+				lastIndex = undefined;
+			}
+
+			function save(row) {
+				var params = {
+					orgName: row.orgName,
+					orgCode: row.orgCode,
+					parentId: row.parentId,
+					sequence: row.sequence,
+					activation: row.activation,
+					id: row.id
+				}
+				//调用Ajax发送请求
+				$.ajax({
+					type: "PUT",
+					url: '/api/system/org/update',
+					data: JSON.stringify(params),
+					async: true,
+					processData: false, // 告诉jQuery不要去处理发送的数据
+					contentType: 'application/json;charset=UTF-8', // 告诉jQuery不要去设置Content-Type请求头
+					success: function(data, textStatus) {
+						//字符串转对象
+						var code = data.code;
+						if(code == 0) {
+							showInfo('修改成功');
+						} else {
+							showInfo(msg);
+						}
+					},
+					error: function(XMLHttpRequest, textStatus, errorThrown) {
+						showError("访问服务失败");
+					}
+				});
+			}
+
+			//搜索栏中的查询
+			function query() {
+				var time = new Date();
+				var url = "/api/system/org/list?time=" + time.getMilliseconds();
+
+				$.ajax({
+					type: "GET",
+					url: url,
+					async: true,
+					processData: false, // 告诉jQuery不要去处理发送的数据
+					contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+					success: function(data, textStatus) {
+						//alert("data="+data);
+						//字符串转对象
+						var code = data.code;
+						if(code == 0) {
+							if(data.result.length == 0) {
+								$('#orgContentsGrid').treegrid('loadData', {
+									total: 0,
+									rows: []
+								}); //清空网格数据
+								showInfo('查询结果为空');
+								return;
+							}
+							data.rows = data.result;
+							$.each(data.rows, function(i) {
+								data.rows[i].iconCls = "icon-man";
+								var parentId = data.rows[i].parentId;
+								data.rows[i].num = i + 1;
+								if(parentId != "0") {
+									data.rows[i]._parentId = parentId;
+									data.rows[i].state = "open";
+								} else {
+									data.rows[i].state = "open";
+								}
+							});
+							$('#orgContentsGrid').treegrid('loadData', {
+								total: data.result.length,
+								rows: data.result
+							});
+						} else {
+							showInfo(msg);
+						}
+					},
+					error: function(XMLHttpRequest, textStatus, errorThrown) {
+						showError("访问服务失败");
+					}
+				});
+
+			}
+		</script>
+	</head>
+	<script>
+	</script>
+
+	<body>
+		<!-- 标题 -->
+		<div class="headerTitle">
+			<font>组织管理</font>
+			<!--<a href="">模块帮助</a>-->
+		</div>
+		<!-- 查询条件 -->
+		<div class="searchPanel">
+			<div class="row">
+				<div style="width:20%;min-width:120px;height:30px;float:left;text-align:left;margin-right: 27px;">
+					<a href="javascript:add()" class="easyui-linkbutton" data-options="iconCls:'icon-oto-add'">新增</a>
+					<a href="javascript:confirmDeleteInfo()" class="easyui-linkbutton" data-options="iconCls:'icon-oto-delete'">删除</a>
+				</div>
+				<div style="width:20%;min-width:120px;height:30px;float:right;text-align:right;margin-right: 27px;">
+					<a href="javascript:endEdit()" class="easyui-linkbutton" data-options="iconCls:'icon-oto-save'">保存</a>
+					<a href="javascript:cancel()" class="easyui-linkbutton" data-options="iconCls:'icon-oto-reject'">取消</a>
+				</div>
+				<div style="clear:both"></div>
+			</div>
+		</div>
+		<!-- 网格标题 -->
+		<div class="gridTitle">
+			<font class="titleNameFont">明细信息</font>
+		</div>
+		<!-- 网格 -->
+		<table id="orgContentsGrid" class="easyui-treegrid" style="width:100%;height:300px" data-options="singleSelect:true,remoteSort:false" idField="id" treeField="orgName">
+			<thead>
+				<tr>
+					<th data-options="field:'ck',checkbox:true"></th>
+					<th data-options="field:'num',width:'15%'">序号</th>
+					<th data-options="field:'orgName',width:'25%',sortable:true,editor:'text'">部门</th>
+					<th data-options="field:'orgCode',width:'20%',sortable:true,editor:'text'">部门编号</th>
+					<th data-options="field:'sequence',width:'20%',sortable:true,editor:'text'">顺序</th>
+					<th data-options="field:'activation',width:'20%',formatter:formatcheckbox">激活</th>
+				</tr>
+			</thead>
+		</table>
+	</body>
+
+</html>
