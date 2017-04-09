@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>单位管理</title>
+		<link rel="stylesheet" type="text/css" href="../../easyui/themes/metro/easyui.css" />
+		<link rel="stylesheet" type="text/css" href="../../easyui/themes/icon.css" />
+		<link rel="stylesheet" type="text/css" href="../../css/common.css" />
+		<script type="text/javascript" src="../../js/jquery-1.11.1.js"></script>
+		<script type="text/javascript" src="../../easyui/jquery.easyui.min.js"></script>
+		<script type="text/javascript" src="../../easyui/locale/easyui-lang-zh_CN.js"></script>
+		<script type="text/javascript" src="../../js/common.js"></script>
+		<script type="text/javascript" src="../../js/CookieObj.js"></script>
+		<script type="text/javascript" src="../../js/oss.js"></script>
+		
+		<script type="text/javascript">
+			function submit() {
+				var logoUrl = $('#txtLogoUrl').val();
+				var companyName = $('#txtCompanyName').val();
+				var tel = $('#txtCompanyTel').val();
+				var companyAdress = $('#txtCompanyAddress').val();
+				var introduction = $('#txtCompanyIntroduction').val();
+
+//				if(logoUrl == '' || logoUrl == null){
+//					showError("logo地址不能为空");
+//				}
+				
+				if(companyName == '' || companyName == null){
+					showError("单位名称不能为空");
+					return;
+				}
+				
+				if(tel == '' || tel == null){
+					showError("单位电话不能为空");
+					return;
+				}
+				
+				if(companyAdress == '' || companyAdress == null){
+					showError("单位地址不能为空");
+					return;
+				}
+				
+				if(introduction == '' || introduction == null){
+					showError("单位介绍不能为空");
+					return;
+				}
+				
+				var params = {
+					logoUrl: 'www.baidu.com',
+					companyName: companyName,
+					tel: tel,
+					companyAdress: companyAdress,
+					introduction: introduction
+				}
+				
+				//调用Ajax发送请求
+				$.ajax({
+					type: "POST",
+					url: '/api/system/company/save',
+					data: JSON.stringify(params),
+					async: true,
+					processData: false, // 告诉jQuery不要去处理发送的数据
+					contentType: 'application/json;charset=UTF-8', // 告诉jQuery不要去设置Content-Type请求头
+					success: function(data, textStatus) {
+						//字符串转对象
+						var code = data.code;
+						if(code == 0) {
+							showInfo('保存成功');
+						} else {
+							showInfo(msg);
+						}
+					},
+					error: function(XMLHttpRequest, textStatus, errorThrown) {
+						showError("访问服务失败");
+					}
+				});
+			}
+		</script>
+	</head>
+	<body class="easyui-layout" data-options="fit:true">
+		<!-- 标题 -->
+		<div class="headerTitle">
+			<font>单位管理</font>
+		</div>
+		<div class="searchPanel">
+			<table style="padding-left:15px;padding-right:15px; padding-top:10px;">
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>logo</td>
+					<td width="320px" align="left" colspan="3">
+						<input type="text" class="easyui-textbox" id="txtLogoUrl" style="width: 394px;" data-options="editable:false" />
+					</td>
+				</tr>
+				<tr style="height: 55px; text-align: center;">
+					<td align="right"></td>
+					<td width="394px" align="left" colspan="3">
+						<iframe width="100%" height="35px" scrolling="no" frameborder="0" src="../public/ossupload.html?command=onUploadImage"></iframe>
+						<br><span>图片大小必须为900*500像素</span>
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>单位名称</td>
+					<td align="left" colspan="3">
+						<input type="text" class="easyui-textbox" id="txtCompanyName" style="width: 394px;" searcher="searchPageContents" data-options="editable:true" />
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>单位电话</td>
+					<td align="left" colspan="3">
+						<input type="text" class="easyui-textbox" id="txtCompanyTel" style="width: 394px;" data-options="editable:true" />
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>单位地址</td>
+					<td align="left" colspan="3">
+						<input type="text" class="easyui-textbox" id="txtCompanyAddress" style="width: 394px;" data-options="editable:true" />
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>单位介绍</td>
+					<td align="left" colspan="3">
+						<input type="text" class="easyui-textbox" id="txtCompanyIntroduction" style="width: 394px;" data-options="editable:true" />
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div id="iframe-buttons" style="padding-left: 230px;">
+			<a href="javascript:submit()" class="easyui-linkbutton" iconCls="icon-save">保存</a>
+			<a href="javascript:dialogOrgContentsClose()" class="easyui-linkbutton" iconCls="icon-cancel">取消</a>
+		</div>
+	</body>
+</html>
