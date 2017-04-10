@@ -1,0 +1,648 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+	<meta name="renderer" content="webkit|ie-comp|ie-stand">
+	<meta name="keywords" content="岗位权限管理">
+	<meta name="description" content="后台管理系统。">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta http-equiv="Cache-Control" content="no-siteapp" />
+    <title>岗位权限管理</title>
+    <link rel="stylesheet" type="text/css" href="../../easyui/themes/metro/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="../../easyui/themes/icon.css" />
+	<link rel="stylesheet" type="text/css" href="../../css/common.css" />
+	<link rel="stylesheet" href="../../ztree/zTreeStyle/zTreeStyle.css" type="text/css">
+	<script type="text/javascript" src="../../js/jquery-1.11.1.js"></script>
+	<script type="text/javascript" src="../../easyui/jquery.easyui.min.js"></script>
+	<script type="text/javascript" src="../../easyui/locale/easyui-lang-zh_CN.js"></script>
+  	<script type="text/javascript" src="../../ztree/js/jquery.ztree.core.js"></script>
+  	<script type="text/javascript" src="../../ztree/js/jquery.ztree.excheck.js"></script>
+  	<script type="text/javascript" src="../../js/common.js"></script>
+  </head>
+  
+  <style>
+  	.tree-folder{
+  		background: url();
+  		width: 5px;
+  		height: 5px;
+  	}
+  	
+  	.tree-file{
+  		background: url();
+  		height: 5px;
+  		width: 5px;
+  	}
+  </style>
+  <script>
+  		var pager;
+  
+		(function() {
+			debugger
+		
+		})
+		
+		function init() {
+			//去掉结点前面的文件及文件夹小图标
+			$(".tree-icon .tree-file").removeClass("tree-icon tree-file");
+			$(".tree-icon .tree-folder").removeClass("tree-icon tree-folder tree-folder-open tree-folder-closed");
+		}
+		//关闭添加页面内容弹出框
+		function dialogOrgContentsClose() {
+			$('#orgContentsDialog').dialog('close');
+		}
+		//关闭添加页面内容弹出框
+		function dialogOrgContentsOpen() {
+			$('#orgContentsDialog').dialog('open');
+		}
+		
+		//关闭添加页面内容弹出框
+		function addOrgContents() {
+			
+			clearAllParam()
+		
+			$('#orgContentsDialog').dialog({
+				title: "添加岗位"
+			});
+			$('#orgContentsDialog').dialog('open');
+		
+		}
+		
+		//关闭添加页面内容弹出框
+		function updateOrgContent() {
+			
+			findRoleDetail();
+		
+			$('#orgContentsDialog').dialog({
+				title: "修改岗位"
+			});
+			$('#orgContentsDialog').dialog('open');
+			
+		}
+		
+		$(document).ready(function() {
+			
+			//初始化网格
+				$('#orgContentsGrid').datagrid({
+//					height: ($(document).height() - otherHeight),
+//					onLoadSuccess: function(data) {
+//						$("#orgContentsGrid").datagrid('doCellTip', {
+//							'max-width': '300px',
+//							'delay': 500
+//						});
+//					}
+					rowStyler: function(index,row){
+						if (index%2 != 0){
+							return 'background-color:#F2F2F2;'; // return inline style
+						}
+					}
+				});
+
+				//设置分页控件
+				pager = $('#orgContentsGrid').datagrid('getPager');
+				$(pager).pagination({
+					onSelectPage: query,
+					pageSize: 20,
+					pageList: [20, 50, 100, 200],
+					beforePageText: '第',
+					afterPageText: '页	共{pages}页',
+					displayMsg: '当前显示 {from} - {to} 条记录		共 {total} 条记录'
+				});
+			
+		
+			$('#moduelPermissionGrid').treegrid({
+				url: '/api/module/list', //访问后台的地址 
+				method: 'get',
+				idField: 'id',
+				treeField: 'name',
+				checkbox: true,
+				loadFilter: function(data) {
+					return data.result;
+				},
+			});
+			
+			query()
+			
+			init()
+		});
+		
+		function formatcheckbox(val, row) {
+			return "<input class='moduleCheck' moduleId='"+row.id+"' type='checkbox' onclick=show('" + row.id + "')  id='check_" + row.id + "' " + (row.checked ? 'checked' : '') + "/>" + row.name;
+		}
+		
+		function formatcheckboxview(val, row,index) {
+			if(row.parentId !== 0 || row.children.length === 0){
+				return "<input type='checkbox' class='permission_"+row.id+"' data='{"+'"moduleId"'+":"+row.id+","+'"operate"'+":"+'"VIEW"'+"}' name='check_"+row.id+"'/>";
+			}
+		}
+		function formatcheckboxadd(val, row,index) {
+			if(row.parentId !== 0 || row.children.length === 0){
+				return "<input type='checkbox' class='permission_"+row.id+"' data='{"+'"moduleId"'+":"+row.id+","+'"operate"'+":"+'"ADD"'+"}' name='check_"+row.id+"'/>";
+			}
+		}
+		function formatcheckboxupdate(val, row,index) {
+			if(row.parentId !== 0 || row.children.length === 0){
+				return "<input type='checkbox' class='permission_"+row.id+"' data='{"+'"moduleId"'+":"+row.id+","+'"operate"'+":"+'"UPDATE"'+"}' name='check_"+row.id+"'/>";
+			}
+		}
+		function formatcheckboxdelete(val, row,index) {
+			if(row.parentId !== 0 || row.children.length === 0){
+				return "<input type='checkbox' class='permission_"+row.id+"' data='{"+'"moduleId"'+":"+row.id+","+'"operate"'+":"+'"DELETE"'+"}' name='check_"+row.id+"'/>";
+			}
+		}
+		function formatcheckboxsubmit(val, row,index) {
+			if(row.parentId !== 0 || row.children.length === 0){
+				return "<input type='checkbox' class='permission_"+row.id+"' data='{"+'"moduleId"'+":"+row.id+","+'"operate"'+":"+'"SUBMIT"'+"}' name='check_"+row.id+"'/>";
+			}
+		}
+		function formatcheckboxcheck(val, row,index) {
+			if(row.parentId !== 0 || row.children.length === 0){
+				return "<input type='checkbox' class='permission_"+row.id+"'data='{"+'"moduleId"'+":"+row.id+","+'"operate"'+":"+'"CHECK"'+"}' name='check_"+row.id+"'/>";
+			}
+		}
+		
+		function show(checkid) {
+			var s = '#check_' + checkid;
+			/*选子节点*/
+			var nodes = $("#moduelPermissionGrid").treegrid("getChildren", checkid);
+			for(i = 0; i < nodes.length; i++) {
+				$(('#check_' + nodes[i].id))[0].checked = $(s)[0].checked;
+			}
+			//选上级节点
+			if(!$(s)[0].checked) {
+				var parent = $("#moduelPermissionGrid").treegrid("getParent", checkid);
+				if(parent == null) return;
+				var nodesNotFlag = false;
+				var sons = parent.children;
+				var length = sons.length;
+				var noFlag = 0;
+				for(j = 0; j < sons.length; j++) {
+					if(!$(('#check_' + sons[j].id))[0].checked) {
+						noFlag++;
+					}
+				}
+				if(length === noFlag)
+					$(('#check_' + parent.id))[0].checked = false;
+			} else {
+				var parent = $("#moduelPermissionGrid").treegrid("getParent", checkid);
+				if(parent === null) return;
+				$(('#check_' + parent.id))[0].checked = true;
+			}
+		}
+		
+		//列表查询
+		function query(){
+			var pagerOptions = $(pager).pagination('options');
+			var PAGESIZE = pagerOptions.pageSize;
+			var PAGEINDEX = pagerOptions.pageNumber < 1 ? 1 : pagerOptions.pageNumber;
+
+			var searchParam = {
+
+				keyName: $('#searchRoleName').textbox('getValue'),
+				keyCode: $('#searchRoleCode').textbox('getValue'),
+				orgId:   $("#searchDeptId").combobox('getValue'),
+				currentPage: PAGEINDEX,
+				pageSize: PAGESIZE
+			}
+
+			var searchParamStr = JSON.stringify(searchParam);
+			
+			$('#orgContentsGrid').datagrid("loading","玩命加载。。。");  
+
+			$.ajax({
+				type: "POST",
+				url: '/api/role/query',
+				async: true,
+				data:searchParamStr,
+				contentType: 'application/json', // 告诉jQuery不要去设置Content-Type请求头
+				success: function(data, textStatus) {
+					$('#orgContentsGrid').datagrid("loaded");
+					var code = data.code;
+					var msg = data.description;
+					if (code == 0) {
+						if (data.result.list.length == 0) {
+							$('#orgContentsGrid').datagrid('loadData', {
+								total: 0,
+								rows: []
+							}); //清空网格数据
+							showInfo('查询结果为空');
+							return;
+						}
+						$('#orgContentsGrid').datagrid('loadData', {
+							"total": data.result.totalCount,
+							"rows": data.result.list
+						});
+					} else {
+						showInfo(msg);
+					}
+				},
+				error: function(XMLHttpRequest, textStatus, errorThrown) {
+					$('#orgContentsGrid').datagrid("loaded");
+					showError("访问服务失败");
+				}
+			});
+		}
+		//保存岗位
+		function submit() {
+			
+			var roleCode = $("#txtRoleCode").textbox('getValue'),
+				roleName = $("#txtRoleName").textbox('getValue'),
+			    deptId = $("#txtDeptId").combobox('getValue')
+			
+			
+			var codeReg = /^[a-zA-Z0-9]{1,10}$/;
+			if(!codeReg.test(roleCode)){
+				showError("岗位编码必须数字或字母,长度1到10个字符")
+				return;
+			}
+			
+			if(isEmpty(roleName)){
+				showError("岗位名称不能为空")
+				return;
+			}
+			
+			if( roleName.length >= 20){
+				showError("岗位名称长度不能超过20个字符")
+				return;
+			}
+			
+			if(isEmpty(deptId)){
+				showError("请选择部门")
+				return;
+			}
+			
+			 var params = {
+				id: $("#txtRoleId").val(),
+				roleCode: $("#txtRoleCode").textbox('getValue'),
+				roleName: $("#txtRoleName").textbox('getValue'),
+				deptId: $("#txtDeptId").combobox('getValue')
+			 }
+			 
+			 params['modules'] = []
+			 
+			 var modules = $(".moduleCheck");
+			 for (var i=0;i<modules.length;i++) {
+		        if(modules[i].checked){
+		        		var moduleId = $(modules[i]).attr("moduleid")
+		        		//参数中添加
+		        		var module = {id:moduleId}
+		        		module['permissions'] = []
+		        		params['modules'].push(module)
+		        		
+		        		//取功能权限
+		        		var permissions = $((".permission_")+moduleId)
+		        		for (var j=0;j<permissions.length;j++) {
+		        			if(permissions[j].checked){
+		        				var permissionVal = {}
+		        				var permission = $(permissions[j]).attr("data")
+		        				permissionVal['perValue']=jQuery.parseJSON(permission).operate
+		        				module['permissions'].push(permissionVal)
+		        			}
+		        		}
+		        }
+		    }
+			
+			if(params.modules.length === 0){
+				showError("请选择模块菜单")
+				return;
+			}
+			
+			ajaxLoading()
+		
+			$.ajax({
+				type: "post",
+				dataType: "json",
+				data: JSON.stringify(params),
+				url: "/api/saveRole",
+				contentType: "application/json",
+				async: true,
+				success: function(data, res) {
+					ajaxLoadEnd()
+					if(data.code === '0'){
+//						showInfo("保存成功")
+						dialogOrgContentsClose()
+						$('#orgContentsGrid').datagrid("reload");
+						query()
+					}else{
+						showError(data.description)
+					}
+				},
+				error: function(res){
+					ajaxLoadEnd()
+					showError("访问服务错误")
+				}
+			});
+		}
+		
+		function findRoleDetail(){
+			
+			var row = $('#orgContentsGrid').datagrid("getSelected");  
+			if(row == null){
+				showError("请选中一行数据")
+			}
+			var url = '/api/role/'+row.id + '?time='+new Date()
+			$.ajax({
+				type: "GET",
+				url: url,
+				async: true,
+				beforeSend:ajaxLoading,
+				contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+				success: function(data, textStatus) {
+					clearAllParam()
+					ajaxLoadEnd()
+					var code = data.code;
+					var msg = data.description;
+					if (code == 0) {
+						if (isEmpty(data.result)) {
+							showInfo('查询结果为空');
+							return;
+						}
+						var role = data.result;
+						$("#txtRoleId").val(role.id)
+						$("#txtRoleCode").textbox('setValue',role.roleCode)
+						$("#txtRoleName").textbox('setValue',role.roleName)
+						$("#txtDeptId").combotree('setValue',role.deptId)
+						var modulesData = role.modules
+						
+						var modulesMap = {}
+						for(var i=0;i<modulesData.length;i++){
+							modulesMap[modulesData[i].id]=modulesData[i]
+						}
+						var modules = $(".moduleCheck")
+						for (var i=0;i<modules.length;i++) {
+							modules[i].checked=false
+							var moduleId = $(modules[i]).attr("moduleid")
+							if(contains(modulesData,moduleId)){
+							 	modules[i].checked=true
+							 	//取功能权限
+					        		var permissionsNode = $((".permission_")+moduleId)
+					        		if(permissionsNode === undefined)
+					        			continue
+					        		var perData = modulesMap[moduleId].permissions
+					        		for (var j=0;j<permissionsNode.length;j++) {
+					        			permissionsNode[j].checked=false
+					        			var permission = $(permissionsNode[j]).attr("data")
+			        					
+					        			if(containsPermission(perData,jQuery.parseJSON(permission).operate)){
+									 	permissionsNode[j].checked=true
+								    }
+					        		}
+							}
+						 	
+				        		
+					   }
+					} else {
+						showInfo(msg);
+					}
+				},
+				error: function(XMLHttpRequest, textStatus, errorThrown) {
+					ajaxLoadEnd()
+					showError("访问服务失败");
+				}
+			});
+		}
+		
+		function deleteData(){
+			
+			var row = $('#orgContentsGrid').datagrid("getSelected");  
+			if(row == null){
+				showError("请选中一行数据")
+			}
+			var url = '/api/role/delete/'+row.id + '?time='+new Date()
+			$.ajax({
+				type: "DELETE",
+				url: url,
+				async: true,
+				beforeSend:ajaxLoading,
+				contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+				success: function(data, textStatus) {
+					var code = data.code;
+					var msg = data.description;
+					ajaxLoadEnd()
+					if (code == 0) {
+						query()
+					} else {
+						showInfo(msg)
+					}
+				},
+				error: function(XMLHttpRequest, textStatus, errorThrown) {
+					ajaxLoadEnd()
+					showError("访问服务失败");
+				}
+			});
+		}
+		
+		function contains(arr, obj) {  
+		    var i = arr.length;
+		    
+		    while (i--) {  
+		        if (arr[i].id.toString() === obj) {  
+		            return true;  
+		        }  
+		    }  
+		    return false;  
+		} 
+		function containsPermission(arr, obj) {  
+		    var i = arr.length;
+		    
+		    while (i--) {  
+		        if (arr[i].perValue.toString() === obj) {  
+		            return true;  
+		        }  
+		    }  
+		    return false;  
+		} 
+		
+		function clearAllParam(){
+			$("#txtRoleId").val("")
+			$("#txtRoleCode").textbox('setValue','')
+			$("#txtRoleName").textbox('setValue','')
+			$("#txtDeptId").combotree('setValue','')
+			var modules = $(".moduleCheck");
+			 for (var i=0;i<modules.length;i++) {
+			 	modules[i].checked=false
+			 	var moduleId = $(modules[i]).attr("moduleid")
+	        		//取功能权限
+	        		var permissions = $((".permission_")+moduleId)
+	        		for (var j=0;j<permissions.length;j++) {
+	        			permissions[j].checked=false
+	        		}
+		    }
+		}
+		
+		function cancel(){
+			$("#searchRoleCode").textbox('setValue','')
+			$("#searchRoleName").textbox('setValue','')
+			$("#searchDeptId").combotree('setValue','')
+		}
+		
+		function formatOrgData(data){
+			return data.result;
+		}
+		
+		function operateFormatter(row){
+			return '<a href="javascript:updateOrgContent()" plain="true">分配权限</a>'
+		}
+  </script>
+  
+  <body onload="init()">
+	<!-- 标题 -->
+		<div class="headerTitle">
+			<font>岗位管理</font>
+			<!--<a href="">模块帮助</a>-->
+		</div>
+
+		<!-- 查询条件 -->
+		<div class="searchPanel">
+			<div class="row">
+				<div class="leftCell">
+					<font>岗位编号:</font>
+				</div>
+				<div class="rightCell">
+					<input id="searchRoleCode" class="easyui-textbox" type="text" style="width:100%" />
+				</div>
+				<div class="leftCell">
+					<font>岗位名称:</font>
+				</div>
+				<div class="rightCell">
+					<input id="searchRoleName" class="easyui-textbox" type="text" style="width:100%" />
+				</div>
+				<div class="leftCell">
+					<font>所属部门:</font>
+				</div>
+				<div class="rightCell">
+					<input id="searchDeptId" class="easyui-combotree" type="text" style="width:100%" data-options="prompt:'请选择部门',editable:false,url:'/api/org/select/list',
+										method:'get',
+										valueField:'id',
+										textField:'orgName',
+										loadFilter:function(data){
+											return data.result
+										}" />
+				</div>
+			</div>
+			<div class="row">
+				<div style="width:20%;min-width:120px;height:30px;float:right;text-align:right;margin-right: 27px;">
+					<a href="javascript:query()" class="easyui-linkbutton" data-options="iconCls:'icon-oto-search'">查询</a>
+					<a href="javascript:cancel()" class="easyui-linkbutton" data-options="iconCls:'icon-oto-reset'">重置</a>
+				</div>
+				<div style="clear:both"></div>
+			</div>
+		</div>
+
+		<!-- 网格标题 -->
+		<div class="gridTitle">
+			<font class="titleNameFont">明细信息</font>
+		</div>
+
+		<!-- 网格按钮栏 -->
+		<div class="gridBtnBar">
+			<a href="javascript:addOrgContents()" class="easyui-linkbutton" iconCls="icon-oto-add" plain="true">新增</a>
+			<a href="javascript:updateOrgContent()" class="easyui-linkbutton" iconCls="icon-oto-edit" plain="true">修改</a>
+			<a href="javascript:deleteData()" class="easyui-linkbutton" iconCls="icon-oto-delete" plain="true">删除</a>
+		</div>
+		<!-- 网格 -->
+		<table id="orgContentsGrid" class="easyui-datagrid" style="width:100%;height:100%" data-options="singleSelect:true,pagination:true,remoteSort:false,rownumbers:true">
+			<thead>
+				<tr>
+					<th data-options="field:'ck',checkbox:true"></th>
+					<!--<th data-options="field:'id',width:'4%',sortable:true">序号</th>-->
+					<th data-options="field:'roleCode',width:'10%',sortable:true">岗位编号</th>
+					<th data-options="field:'roleName',width:'15%',sortable:true">岗位名称</th>
+					<th data-options="field:'deptName',width:'15%',sortable:true">所属部门</th>
+					<th data-options="field:'createTime',width:'18%',sortable:true">创建时间</th>
+					<th data-options="field:'updateTime',width:'18%',sortable:true">更新时间</th>
+					<th data-options="field:'operate',width:'12%',sortable:true,formatter:operateFormatter">操作</th>
+				</tr>
+			</thead>
+		</table>
+		
+		<!--添加用户内容弹出框-->
+		<div id="orgContentsDialog" class="easyui-dialog" closed="true" title: "页面内容" style="width:520px;height:460px; " data-options="buttons: '#dlg-buttons',modal:true ">
+			<table style="padding-left:15px;padding-right:15px; padding-top:10px;">
+			<tr style="margin-bottom: 10px;">
+				<input id="txtRoleId" type="hidden" />
+				<td align="right"><font color="#FF0000">*</font>岗位编号</td>
+				<td colspan="3" align="left">
+					<input class="easyui-textbox" id="txtRoleCode" style="width: 394px;" 
+						data-options="prompt:'请输入岗位编号',editable:true" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>岗位名称:</td>
+				<td align="left" colspan="3">
+					<input type="text" class="easyui-textbox" id="txtRoleName" style="width: 394px;" data-options="prompt:'请输入岗位名称',editable:true" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>所属部门:</td>
+				<td align="left" colspan="3">
+					<select id="txtDeptId" class="easyui-combotree" iconCls="" style="width:394px;"
+					         data-options="prompt:'请选择部门',editable:false,url:'/api/org/select/list',
+										method:'get',
+										valueField:'id',
+										textField:'orgName',
+										loadFilter:function(data){
+											return data.result
+										}">
+					</select>
+					<!--<input type="text" class="easyui-combobox" id="txtDeptId"  style="width: 394px;" 
+						  data-options="prompt:'请选择部门',editable:false,url:'/api/org/select/list',
+										method:'get',
+										valueField:'id',
+										textField:'orgName',
+										loadFilter:function(data){
+											return data.result
+										}" />-->
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>分配权限:</td>
+			</tr>
+			</table>
+			<!--<div split="true" style="width:200px;height:275px;margin-left:25px;margin-top:10px;float: left;border:solid #ddd 1px;overflow-y: auto; overflow-x:hidden;">
+				<div style="padding-top:3px;padding-left: 3px;">模块(菜单)</div>
+				<ul id="ztreeModule" class="ztree">
+					
+				</ul>
+			</div>
+			<div id="content" title="Language" style="width:200px;height:275px;margin-top:10px;float: left;margin-left:25px;margin-top:10px;float: left;border:solid #ddd 1px;">
+				<div style="padding-left:3px;padding-top:3px;">为岗位分配功能:
+				<p>1、选中菜单项</p>
+				<p>2、选中菜单项下的功能项</p>
+				<p>3、单击保存,完成岗位功能分配</p>
+				</div>
+				<div><input type="checkbox" />新增 </div>
+				<div><input type="checkbox" />修改 </div>
+				<div><input type="checkbox" />删除 </div>
+				<div><input type="checkbox" />审核 </div>
+			</div>-->
+			<div split="true" style="width:55px;margin-left:25px;margin-top:10px;float: left;">
+				
+			</div>
+			<table id="moduelPermissionGrid"  class="easyui-treegrid" style="width:393px;height:260px;overflow-x:scroll; overflow-y:scroll;"
+				  idField="id" treeField="name" 
+               		data-options="checkbox:true,singleSelect:false"
+                >
+				<thead>
+					<tr frozen="true">
+						<th field="region" width="150">模块权限</th>
+						<th colspan="6">功能权限</th>
+					</tr>
+					<tr frozen="true">
+						<th field="name" width="35%" formatter="formatcheckbox">菜单</th>
+						<th field="view" width="8%" align="center" formatter="formatcheckboxview">查看</th>
+						<th field="add" width="8%" align="center" formatter="formatcheckboxadd">新增</th>
+						<th field="update" width="8%" align="center" formatter="formatcheckboxupdate">修改</th>
+						<th field="delete" width="8%" align="center" formatter="formatcheckboxdelete">删除</th>
+						<th field="submit" width="8%" align="center" formatter="formatcheckboxsubmit">提交</th>
+						<th field="check" width="8%" align="center" formatter="formatcheckboxcheck">审核</th>
+					</tr>
+				</thead>
+			</table>
+			<div id="dlg-buttons">
+				<a href="javascript:submit()" class="easyui-linkbutton" iconCls="icon-oto-save">保存</a>
+				<a href="javascript:dialogOrgContentsClose()" class="easyui-linkbutton" iconCls="icon-oto-delete">关闭</a>
+			</div>
+		</div>
+  </body>
+</html>
