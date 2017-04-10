@@ -6,7 +6,9 @@
 
 /** 初始化 **/
 body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,input,button,textarea,p,blockquote,th,td,form,pre{margin: 0; padding: 0; -webkit-tap-highlight-color:rgba(0,0,0,0)}
-body{-webkit-font-feature-settings: 'kern' 1; -moz-font-feature-settings: 'kern' 1; -o-font-feature-settings: 'kern' 1; text-rendering: geometricPrecision;}
+body{
+	overflow-x : hidden;
+    overflow-y : hidden; -webkit-font-feature-settings: 'kern' 1; -moz-font-feature-settings: 'kern' 1; -o-font-feature-settings: 'kern' 1; text-rendering: geometricPrecision;}
 a:active,a:hover{outline:0}
 img{display: inline-block; border: none; vertical-align: middle;}
 li{list-style:none;}
@@ -51,13 +53,13 @@ a cite{font-style: normal; *cursor:pointer;}
 
 
 /* login */
-.login-bg{background: url(../image/login-bg-8.jpg) no-repeat center center fixed;background-size:100% 100%;}
+.login-bg{background: url(../image/login-bg-9.jpg) no-repeat center center fixed;background-size:100% 100%;}
 .login-box {width: 450px;height: 330px;margin: 10% auto;background-color: rgba(255, 255, 255, 0.407843);border-radius: 10px;color: aliceblue;}
 .login-box header {height: 39px;padding: 10px;border-bottom: 1px solid aliceblue;}
 .login-box header h1 {text-align: center;font-size: 25px;line-height: 40px;}
 .login-box .login-main {height: 185px;padding: 30px 90px 0;}
 .login-main .layui-form-item {position: relative;}
-.login-main .layui-form-item .login-icon {position: absolute;color: #ccc;top: 10px;left: 10px;}
+.login-main .layui-form-item .login-icon {position: absolute;color: #03339E;top: 10px;left: 10px;}
 .login-main .layui-form-item input {padding-left: 34px;}
 .login-box footer {height: 35px;padding: 10px 10px 0 10px;}
 .login-box footer p {line-height: 35px;text-align: center;}
@@ -142,7 +144,7 @@ a cite{font-style: normal; *cursor:pointer;}
 .tab-nav-content a.active i:hover{color: #FF5722;}
 .tab-nav-content .content-tab{transition: all .3s ease-out 0s;-webkit-transition: all .3s ease-out 0s;}
 
-.login_btn{background-color: #2FB2FF;color: #2b2e37;width: 269px;margin-top: 10px;}
+.login_btn{background-color: #0161BC;color: #f2f2f2;width: 269px;margin-top: 10px;}
 
 
 
@@ -167,6 +169,23 @@ a cite{font-style: normal; *cursor:pointer;}
 	.layout-side-arrow{display:none;}
 	.layout-footer{left:0px;}
 }
+
+.icon-user:before{content: '\E613';}
+.icon-pwd:before{content: '\E642';}
+
+.icon-code:before {
+    content: '\E641';
+}
+.login-icon-code{
+	position: absolute;
+    color: #03339E;
+    top: 2px;
+    left: 10px
+}
+.icon-btn:before {
+    content:'\E612' ;
+}
+
 
 
 

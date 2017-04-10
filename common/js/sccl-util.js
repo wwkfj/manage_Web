@@ -37,7 +37,7 @@ function ajax(url, param, datat, callback) {
 //		},
 		complete:function(XHR, TS){
              	if(XHR.status === 401){
-             		location.href='/Test1/page/login.html';
+             		location.href='login.html';
              	}
          }
 	});  
