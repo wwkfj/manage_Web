@@ -1,36 +1,20 @@
-/**
- * 一些通用的工具方法
- */
-
-//系统ID
-var systemId = "OTO";
-
-//查询弹出框宽度
-var queryDiaWidth = 520;
-
-//查询弹出框高度
-var queryDiaHeight = 394;
-
-//编辑弹出框宽度
-var editDiaWidth = 520;
-
-//编辑弹出框高度
-var editDiaHeight = 520;
-
-//OSS URL
-var ossUrl = "http://zjlh-wx.oss-cn-hangzhou.aliyuncs.com/";
-
-//素材URL
-var pageContentsPath = "/WxMobile/pages/content/DC01300102_Detail.html?pageId=";
-
-function getNullStr(str){
-	if(isEmpty(str)){
-		return '';
-	}
-	
-	return str;
+function showError(msg) {
+	$.messager.alert('消息', msg, 'error');
 }
 
+function showInfo(msg) {
+	$.messager.alert('消息', msg, 'info');
+}
+
+function page404() {
+	document.write("404\n页面不存在");
+}
+
+function isEmpty(str){
+	if(str === '' || str === undefined || str === null)
+		return true;
+	return false;
+}
 
 /*===============DataGrid 鼠标移动上去显示被隐藏的内容======================*/
  $.extend($.fn.datagrid.methods, {  
@@ -135,300 +119,29 @@ function getNullStr(str){
     }  
 }); 
 
-
-/*
- * 获取URL参数
- * 传入：key
- * 返回：value
- */
-function getQueryParam(key) {
-	var reg = new RegExp("(^|&)" + key + "=([^&]*)(&|$)");
-	var r = window.location.search.substr(1).match(reg);
-
-	if (r != null)
-		return r[2];
-	return null;
-}
-
-function showError(msg) {
-	$.messager.alert('消息', msg, 'error');
-}
-
-function showInfo(msg) {
-	$.messager.alert('消息', msg, 'info');
-}
-
-function page404() {
-	document.write("404\n页面不存在");
-}
-
-/**
- * 字典
- */
-var wordBooks;
-/**
- * 根据关键字取字典列表
- */
-function getWordBookByKeyword(keyWord) {
-	var wordBook;
-	if (wordBooks != null) {
-		wordBook = wordBooks[keyWord];
-	}
-	return wordBook;
-}
-
-/**
- * 根据关键字和字典的值，取字典显示
- */
-function getDisplayByValue(keyWord, value) {
-		var wordBook = getWordBookByKeyword(keyWord);
-		if (wordBook == null) {
-			return null;
-		}
-
-		for (var i = 0; i < wordBook.length; i++) {
-			if (value == wordBook[i].wordValue) {
-				return wordBook[i].wordDisplay;
-			}
-		}
-	}
-	/**
-	 * 初始化下拉列表
-	 */
-
-function initCombobox(keyword, id) {
-		var wordBook = getWordBookByKeyword(keyword);
-		if (wordBook != null) {
-			$('#' + id).combobox({
-				data: wordBook,
-				valueField: 'wordValue',
-				textField: 'wordDisplay'
-			});
-		}
-	}
-
-	function initHasNullCombobox(keyword, id) {
-		var wordBook = getWordBookByKeyword(keyword);
-		var worddefault = {wordValue:'',wordDisplay:'空'};
-		wordBook.unshift(worddefault);
-		if (wordBook != null) {
-			$('#' + id).combobox({
-				data: wordBook,
-				valueField: 'wordValue',
-				textField: 'wordDisplay'
-			});
-		}
-	}
-	/**
-	 * 调用服务查询字典
-	 */
-
-function initWordBook(keyWords, callback) {
-	var cd = new Clientdata({
-		clienttype: 1,
-		token: '',
-		code: 0,
-		systemid: systemId,
-		modulecode: '01300102'
-	});
-
-	cd.setSearchMap({
-		KEYWORDS: keyWords
-	});
-	var cdStr = JSON.stringify(cd);
-	cdStr = encodeURI(cdStr);
-	var url = "/otowordbook/?data=" + cdStr;
-
-	$.ajax({
-		type: "GET",
-		url: url,
-		headers: {
-			method: 'getWordBookByKeyword'
-		},
-		async: true,
-		processData: false, // 告诉jQuery不要去处理发送的数据
-		contentType: false, // 告诉jQuery不要去设置Content-Type请求头
-		success: function(data, status) {
-			if (status == 'success') {
-				var resultJson = jQuery.parseJSON(data);
-				var code = resultJson.code;
-				var msg = resultJson.msg;
-				if (code == 0) {
-					wordBooks = resultJson.dataModel.wordBooks;
-					//回调初始化下拉列表
-					if (!isEmpty(callback)) {
-						window[callback]();
-					}
-				} else {
-					showError(msg);
-				}
-			} else {
-				showError("访问服务失败");
-			}
-		},
-		error: function(XMLHttpRequest, textStatus, errorThrown) {
-			showError("访问服务失败");
-		}
-	});
-}
-
-function getUserModuleInfo(token,modulecode,callback){
-	var cd = new Clientdata({
-		clienttype: 1,
-		token: token,
-		code: 0,
-		systemid: systemId,
-		modulecode: '01300102'
-	});
-
-	cd.setSearchMap({
-		MODULECODE:modulecode
-	});
-	var cdStr = JSON.stringify(cd);
-	cdStr = encodeURI(cdStr);
-	var url = "/otosys/?data=" + cdStr;
-
-	$.ajax({
-					type: "GET",
-					url: url,
-					headers: {
-						method: 'getUserModuleInfo'
-					},
-					async: true,
-					processData: false, // 告诉jQuery不要去处理发送的数据
-					contentType: false, // 告诉jQuery不要去设置Content-Type请求头
-					success: function(data, textStatus) {
-						var resultJson = jQuery.parseJSON(data);
-						var code = resultJson.code;
-						var msg = resultJson.msg;
-						if (code == 0) {
-							//回调
-							if (callback != null) {
-								window[callback](resultJson.dataModel.dataRange);
-							}
-						} else {
-							showError(msg);
-						}
-					},
-					error: function(XMLHttpRequest, textStatus, errorThrown) {
-						showError("访问服务失败");
-					}
-				});
-}
-
-/**根据token获取用户信息**/
-function getUserInfoByToken(token,callback){
-	
-	var cd = new Clientdata({
-		clienttype: 1,
-		token: token,
-		code: 0,
-		systemid: systemId,
-		modulecode: '01300102'
-	});
-
-	cd.setSearchMap({
-	});
-	var cdStr = JSON.stringify(cd);
-	cdStr = encodeURI(cdStr);
-	var url = "/otosys/?data=" + cdStr;
-
-	$.ajax({
-					type: "GET",
-					url: url,
-					headers: {
-						method: 'getUserInfo'
-					},
-					async: true,
-					processData: false, // 告诉jQuery不要去处理发送的数据
-					contentType: false, // 告诉jQuery不要去设置Content-Type请求头
-					success: function(data, textStatus) {
-						var resultJson = jQuery.parseJSON(data);
-						var code = resultJson.code;
-						var msg = resultJson.msg;
-						if (code == 0) {
-							//回调
-							if (callback != null) {
-								window[callback](resultJson.dataModel.userInfo);
-							}
-						} else {
-							showError(msg);
-						}
-					},
-					error: function(XMLHttpRequest, textStatus, errorThrown) {
-						showError("访问服务失败");
-					}
-				});
-	
-}
-
-function getSearchBoxSplitValue(value) {
-	return value.split("|")[0];
-}
-
-function isEmpty(obj){
-	return (obj==null||obj=='undefined'||obj==''||obj.length==0||obj=='null');
-}
-
-/**
- * 验证手机号码
- * @param {Object} phoneNum
- */
-function checkPhone(phoneNum){
-	var reg = /^1\d{10}$/;
-	return reg.test(phoneNum);
-}
-
-/**
- * 验证身份证号
- * @param {Object} idNo
- */
-function checkIdNo(idNo){
-	var reg = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
-	return reg.test(idNo);
-}
-
-/**
- * 检查数字
- * @param {Object} num
- */
-function checkNum(num){
-	var reg = /^[0-9]*$/;
-	return reg.test(num);
-}
-
-/**
- * 检查URL
- */
-function checkURL(linkUrl){
-	return linkUrl.substring(0,4)==='http';
-}
-
-/**
- * 获取复选框的值
- * @param {Object} id
- */
-function getChkVal(id){
-	if(document.getElementById(id).checked==false){
-		return '0';
-	}else{
-		return '1';
-	}
-}
-
-/**
- * 设置复选框的值
- * @param {Object} id
- * @param {Object} value
- */
-function setChkVal(id,value){
-	if('0'==value){
-		document.getElementById(id).checked=false;
-	}
-	else if('1'==value){
-		document.getElementById(id).checked=true;
-	}
-}
+(function () {    
+   $.extend($.fn.datagrid.methods, {    
+	    //显示遮罩    
+	    loading: function (jq, msg) {    
+	        return jq.each(function () {    
+	            var panel = $(this).datagrid("getPanel");    
+	            if (msg == undefined) {    
+	                msg = "正在加载数据，请稍候...";    
+	            }    
+	            $("<div class=\"datagrid-mask\"></div>").css({'z-index':99999, display: "block", width: panel.width(), height: panel.height() }).appendTo(panel);    
+	            $("<div class=\"datagrid-mask-msg\"></div>").html(msg).appendTo(panel).css({ 'z-index':99999,display: "block", left: (panel.width() - $("div.datagrid-mask-msg", panel).outerWidth()) / 2, top: (panel.height() - $("div.datagrid-mask-msg", panel).outerHeight()) / 2 });    
+	            });    
+	    },    
+	    //隐藏遮罩    
+	    loaded: function (jq) {    
+	        return jq.each(function () {    
+	            var panel = $(this).datagrid("getPanel");    
+	            panel.find("div.datagrid-mask-msg").remove();    
+	            panel.find("div.datagrid-mask").remove();    
+	            });    
+	        }    
+    });    
+})(jQuery);   
 
 /**
  *加载中弹出框 
