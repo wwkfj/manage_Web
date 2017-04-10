@@ -55,16 +55,16 @@
 		<div class="searchPanel">
 			<div class="row">
 				<div class="leftCell">
-					<font>用户名称:</font>
+					<font>用户姓名:</font>
 				</div>
 				<div class="rightCell">
-					<input id="txtOrgName" class="easyui-textbox" type="text" style="width:100%" />
+					<input id="name" class="easyui-textbox" type="text" style="width:100%" />
 				</div>
 				<div class="leftCell">
 					<font>部门:</font>
 				</div>
 				<div class="rightCell">
-					<input id="txtPageName" class="easyui-textbox" type="text" style="width:100%" />
+					<input id="deptName" class="easyui-textbox" type="text" style="width:100%" />
 				</div>
 				<div class="leftCell"><font>状态:</font>
 				</div>
@@ -75,10 +75,10 @@
 					</select>
 				</div>
 				<div class="leftCell">
-					<font>用户类型:</font>
+					<font>账户名:</font>
 				</div>
 				<div class="rightCell">
-					<input id="cbDataType" class="easyui-combobox" type="text" style="width:100%" data-options="editable:false" />
+					<input id="userName" class="easyui-combobox" type="text" style="width:100%" data-options="editable:false" />
 				</div>
 			</div>
 			<div class="row">
@@ -100,7 +100,6 @@
 			<a href="javascript:addOrgContents()" class="easyui-linkbutton" iconCls="icon-oto-add" plain="true">新增</a>
 			<a href="javascript:updateOrgContent()" class="easyui-linkbutton" iconCls="icon-oto-edit" plain="true">修改</a>
 			<a href="javascript:deleteOrgContents()" class="easyui-linkbutton" iconCls="icon-oto-delete" plain="true">删除</a>
-			<a href="javascript:exportOrgContents()" class="easyui-linkbutton" iconCls="icon-oto-export" plain="true">导出</a>
 		</div>
 		<!-- 网格 -->
 		<table id="orgContentsGrid" class="easyui-datagrid" style="width:100%;height:100%" data-options="singleSelect:true,pagination:true,remoteSort:false">
@@ -124,55 +123,113 @@
 		<div id="orgContentsDialog" class="easyui-dialog" closed="true" title: "页面内容" style="width:520px;height:460px; " data-options="buttons: '#dlg-buttons',modal:true ">
 			<table style="padding-left:15px;padding-right:15px; padding-top:10px;">
 			<tr style="margin-bottom: 10px;">
-				<input id="txtDlgOrgID" type="hidden" />
-				<td align="right"><font color="#FF0000">*</font>门店名称:</td>
+				<input id="userId" type="hidden" />
+				<td align="right"><font color="#FF0000">*</font>用户姓名:</td>
 				<td colspan="3" align="left">
-					<input class="easyui-searchbox" id="txtDlgOrgName" style="width: 394px;" data-options="editable:false" />
+					<input class="easyui-textbox" id="name" style="width: 394px;" data-options="editable:false" />
 				</td>
 			</tr>
 			<tr style="margin-bottom: 10px;">
-				<td align="right"><font color="#FF0000">*</font>内容标题:</td>
+				<td align="right"><font color="#FF0000">*</font>用户工号:</td>
 				<td align="left" colspan="3">
-					<input type="text" class="easyui-searchbox" id="txtDlgPageName" style="width: 394px;" data-options="editable:false" />
+					<input type="text" class="easyui-textbox" id="userName" style="width: 394px;" data-options="editable:false" />
 				</td>
 			</tr>
 			<tr style="margin-bottom: 10px;">
-				<input id="txtDlgPageID" type="hidden" />
-				<input id="txtDlgPageUrl" type="hidden" />
-				<td align="right"><font color="#FF0000">*</font>内容类型:</td>
+				<td align="right"><font color="#FF0000">*</font>账户名:</td>
 				<td align="left" colspan="3">
-					<input type="text" class="easyui-combobox" id="cbDlgDataType" style="width: 394px;" data-options="editable:false" />
+					<input type="text" class="easyui-textbox" id="userName" style="width: 394px;" data-options="editable:false" />
 				</td>
 			</tr>
 			<tr style="margin-bottom: 10px;">
-				<td align="right"><font color="#FF0000">*</font>是否轮播图:</td>
+				<td align="right"><font color="#FF0000">*</font>密码:</td>
+				<td align="left" colspan="3">
+					<input type="text" class="easyui-textbox" id="password" style="width: 394px;" data-options="editable:false" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>再次输入密码:</td>
+				<td align="left" colspan="3">
+					<input type="text" class="easyui-textbox" id="agianPassword" style="width: 394px;" data-options="editable:false" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<input id="deptId" type="hidden" />
+				<td align="right"><font color="#FF0000">*</font>所属部门</td>
+				<td align="left" colspan="3">
+					<input type="text" class="easyui-combobox" id="deptName" style="width: 394px;" data-options="editable:false" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>是否启用:</td>
 				<td align="left" style="width: 150px;">
-					<input type="checkbox" id="dlgCheckAdFlag" />
+					<input type="checkbox" id="enableFlg" />
 				</td>
-				<td><span>轮播图序号:</span>
-					<input type="text" class="easyui-numberbox" id="txtDlgSortNo" style="width: 172px;" data-options="validType:'number'" />
+				<td><span>入职时间:</span>
+					<input type="text" class="easyui-datebox" id="joinTime" style="width: 172px;" required="required" />
 				</td>
 			</tr>
 			<tr style="margin-bottom: 10px;">
-				<td align="right"><font color="#FF0000">*</font>图片Url:</td>
+				<td align="right"><font color="#FF0000">*</font>岗位分配:</td>
 				<td width="320px" align="left" colspan="3">
-					<input type="text" class="easyui-textbox" id="txtDlgPicUrl" style="width: 394px;" data-options="editable:false" />
-				</td>
-			</tr>
-			<!--<tr style="height: 55px; text-align: center;">
-				<td align="right"></td>
-				<td width="394px" align="left" colspan="3">
-					<iframe width="100%" height="35px" scrolling="no" frameborder="0" src="../public/ossupload.html?command=onUploadImage"></iframe>
-					<br><span>图片大小必须为900*500像素</span>
+					<input type="text" class="easyui-combobox" id="roleName" style="width: 394px;" data-options="editable:false" />
 				</td>
 			</tr>
 			<tr style="margin-bottom: 10px;">
-				<td></td>
-				<td align="left" colspan="3">
-					<img id="txtDlgImage" width="300px" height="167px" src="../../img/fengmiantu.png" />
+				<td align="right"><font color="#FF0000"></font>权限显示:</td>
+				<!-- 权限网格 -->
+				<td width="320px" align="left" colspan="3">
+				<table id="permissionGrid" class="easyui-datagrid" style="width:394px;height:100%" data-options="pagination:false,remoteSort:false">
+					<thead>
+						<tr>
+							<th data-options="field:'userIdx',width:'40%',sortable:true">模块(菜单)</th>
+							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
+						</tr>
+						<tr>
+							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
+							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
+						</tr>
+						<tr>
+							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
+							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
+						</tr>
+						<tr>
+							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
+							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
+						</tr>
+						<tr>
+							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
+							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
+						</tr>
+						<tr>
+							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
+							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
+						</tr>
+						<tr>
+							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
+							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
+						</tr>
+						<tr>
+							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
+							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
+						</tr>
+						<tr>
+							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
+							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
+						</tr>
+						<tr>
+							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
+							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
+						</tr>
+					</thead>
+				</table>
 				</td>
-			</tr>-->
+			</tr>
 			</table>
+			<div id="dlg-buttons">
+				<a href="javascript:submit()" class="easyui-linkbutton" iconCls="icon-oto-save">保存</a>
+				<a href="javascript:dialogOrgContentsClose()" class="easyui-linkbutton" iconCls="icon-oto-delete">关闭</a>
+			</div>
 		</div>
   </body>
 </html>
