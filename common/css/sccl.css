@@ -54,6 +54,7 @@ a cite{font-style: normal; *cursor:pointer;}
 
 /* login */
 .login-bg{background: url(../image/login-bg-9.jpg) no-repeat center center fixed;background-size:100% 100%;}
+.login-logo{background: url(../image/logo.png) no-repeat;background-size:auto 54px;height: 55px;margin-top:5px ;margin-left:5px ;}
 .login-box {width: 450px;height: 330px;margin: 10% auto;background-color: rgba(255, 255, 255, 0.407843);border-radius: 10px;color: aliceblue;}
 .login-box header {height: 39px;padding: 10px;border-bottom: 1px solid aliceblue;}
 .login-box header h1 {text-align: center;font-size: 25px;line-height: 40px;}
@@ -144,7 +145,14 @@ a cite{font-style: normal; *cursor:pointer;}
 .tab-nav-content a.active i:hover{color: #FF5722;}
 .tab-nav-content .content-tab{transition: all .3s ease-out 0s;-webkit-transition: all .3s ease-out 0s;}
 
-.login_btn{background-color: #0161BC;color: #f2f2f2;width: 269px;margin-top: 10px;}
+.login_btn{color: #f2f2f2;width: 269px;margin-top: 10px;
+			FILTER: progid:DXImageTransform.Microsoft.Gradient(gradientType=0, startColorStr=#AC07BD, endColorStr=rgba(80, 144, 205, 0.89)); /*IE 6 7 8*/
+            background: -ms-linear-gradient(top, #0161BC, rgba(80, 144, 205, 0.89));        /* IE 10 */
+            background:-moz-linear-gradient(top, #0161BC, rgba(80, 144, 205, 0.89));/*火狐*/
+            background:-webkit-gradient(linear, 0% 0%, 0% 100%, from(#0161BC), to(rgba(80, 144, 205, 0.89)));/*谷歌*/
+            background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#0161BC), to(rgba(80, 144, 205, 0.89)));      /* Safari 4-5, Chrome 1-9*/
+            background: -webkit-linear-gradient(top, #0161BC, rgba(80, 144, 205, 0.89));   /*Safari5.1 Chrome 10+*/
+            background: -o-linear-gradient(top, #0161BC, rgba(80, 144, 205, 0.89));  /*Opera 11.10+*/}
 
 
 
