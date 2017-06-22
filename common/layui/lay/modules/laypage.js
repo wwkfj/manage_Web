@@ -2,7 +2,7 @@
  
  @Name : layui.laypage 分页组件
  @Author：贤心
- @License：LGPL
+ @License：MIT
  
  */
 
@@ -81,7 +81,7 @@ layui.define(function(exports){
     }
     for(; dict.start <= dict.end; dict.start++){
       if(dict.start === conf.curr){
-        view.push('<span class="layui-laypage-curr"><em class="layui-laypage-em" '+ (/^#/.test(conf.skin) ? 'style="background-color:'+ conf.skin +';' : '') +'"></em><em>'+ dict.start +'</em></span>');
+        view.push('<span class="layui-laypage-curr"><em class="layui-laypage-em" '+ (/^#/.test(conf.skin) ? 'style="background-color:'+ conf.skin +';"' : '') +'></em><em>'+ dict.start +'</em></span>');
       } else {
         view.push('<a href="javascript:;" data-page="'+ dict.start +'">'+ dict.start +'</a>');
       }
@@ -102,7 +102,7 @@ layui.define(function(exports){
       }()));
     }
 
-    return '<div class="layui-laypage layui-laypage-'+ (conf.skin ? (function(skin){
+    return '<div class="layui-box layui-laypage layui-laypage-'+ (conf.skin ? (function(skin){
       return /^#/.test(skin) ? 'molv' : skin;
     }(conf.skin)) : 'default') +'" id="layui-laypage-'+ that.config.item +'">'+ view.join('') + function(){
       return conf.skip 
