@@ -165,3 +165,57 @@ function ajaxLoadEnd() {
 	$(".datagrid-mask").remove();
 	$(".datagrid-mask-msg").remove();
 }
+
+/*post请求*/
+function post(url, param, datat, callback) {  
+	$.ajax({  
+		type: "post",  
+		url: url,  
+		data: param,  
+		dataType: datat, 
+		contentType:"application/json",
+		success: function(data){
+			if(data.code!=0){
+				alert(data.description)
+				return;
+			}
+			callback(data);
+		},  
+		error: function (s) {  
+			showError("访问服务错误");
+		},
+		complete:function(XHR, TS){
+             	if(XHR.status === 401){
+             		location.href='login.html';
+             	}
+         }
+	});  
+}
+
+/*get请求*/
+function get(url, param, datat, callback) {  
+	$.ajax({  
+		type: "GET",  
+		url: url,  
+		data: param,  
+		dataType: datat, 
+		contentType:"application/json",
+		success: function(data){
+			if(data.code!=0){
+				alert(data.description)
+				return;
+			}
+			callback(data);
+		},  
+		error: function (s) {  
+			showError("访问服务错误");
+		},
+		complete:function(XHR, TS){
+             	if(XHR.status === 401){
+             		location.href='login.html';
+             	}
+         }
+	});  
+}
+
+

@@ -193,6 +193,13 @@ a cite{font-style: normal; *cursor:pointer;}
 .icon-btn:before {
     content:'\E612' ;
 }
+.message-btn{
+	background-color:#E1E1E8;opacity:0.9;float:right;margin-right: 10px;width:40px;margin-top: 11px;
+}
+.message-btn:hover{
+	background-color:#B3B3B3;
+	opacity:0.0;
+}
 
 
 

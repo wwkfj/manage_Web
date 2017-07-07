@@ -15,6 +15,7 @@
 	<script type="text/javascript" src="../../js/jquery-1.11.1.js"></script>
 	<script type="text/javascript" src="../../easyui/jquery.easyui.min.js"></script>
 	<script type="text/javascript" src="../../easyui/locale/easyui-lang-zh_CN.js"></script>
+	<script type="text/javascript" src="../../js/common.js"></script>
   </head>
   <script>
   	(function(){
@@ -42,12 +43,113 @@
 		
 	}
 	
+	//列表查询
+	function query(){
+		var pagerOptions = $(pager).pagination('options');
+		var PAGESIZE = pagerOptions.pageSize;
+		var PAGEINDEX = pagerOptions.pageNumber < 1 ? 1 : pagerOptions.pageNumber;
+
+		var searchParam = {
+
+			key: $('#searchUserNameTxt').textbox('getValue'),
+			name: $('#searchNameTxt').textbox('getValue'),
+			deptId:   $("#searchDeptId").combobox('getValue'),
+			currentPage: PAGEINDEX,
+			pageSize: PAGESIZE
+		}
+
+		var searchParamStr = JSON.stringify(searchParam);
+		
+		$('#userContentsGrid').datagrid("loading","玩命加载。。。");  
+
+		$.ajax({
+			type: "POST",
+			url: '/api/user/list',
+			async: true,
+			data:searchParamStr,
+			contentType: 'application/json', // 告诉jQuery不要去设置Content-Type请求头
+			success: function(data, textStatus) {
+				$('#userContentsGrid').datagrid("loaded");
+				var code = data.code;
+				var msg = data.description;
+				if (code == 0) {
+					if (data.result.list === undefined ||data.result.list.length == 0) {
+						$('#userContentsGrid').datagrid('loadData', {
+							total: 0,
+							rows: []
+						}); //清空网格数据
+						showInfo('查询结果为空');
+						return;
+					}
+					$('#userContentsGrid').datagrid('loadData', {
+						"total": data.result.totalCount,
+						"rows": data.result.list
+					});
+				} else {
+					showInfo(msg);
+				}
+			},
+			error: function(XMLHttpRequest, textStatus, errorThrown) {
+				$('#userContentsGrid').datagrid("loaded");
+				showError("访问服务失败");
+			}
+		});
+	}
+	
+	$(document).ready(function() {
+			
+			//初始化网格
+				$('#userContentsGrid').datagrid({
+//					height: ($(document).height() - otherHeight),
+//					onLoadSuccess: function(data) {
+//						$("#userContentsGrid").datagrid('doCellTip', {
+//							'max-width': '300px',
+//							'delay': 500
+//						});
+//					}
+					rowStyler: function(index,row){
+						if (index%2 != 0){
+							return 'background-color:#F2F2F2;'; // return inline style
+						}
+					}
+				});
+
+				//设置分页控件
+				pager = $('#userContentsGrid').datagrid('getPager');
+				$(pager).pagination({
+					onSelectPage: query,
+					pageSize: 20,
+					pageList: [20, 50, 100, 200],
+					beforePageText: '第',
+					afterPageText: '页	共{pages}页',
+					displayMsg: '当前显示 {from} - {to} 条记录		共 {total} 条记录'
+				});
+			
+		
+			$('#moduelPermissionGrid').treegrid({
+				url: '/api/module/list', //访问后台的地址 
+				method: 'get',
+				idField: 'id',
+				treeField: 'name',
+				checkbox: true,
+				loadFilter: function(data) {
+					return data.result;
+				},
+			});
+			
+			query()
+			
+//			init()
+
+		get("/api/module/list",{},null,null);
+		});
+	
   </script>
   
   <body>
 	<!-- 标题 -->
 		<div class="headerTitle">
-			<font>用户管理11</font>
+			<font>用户管理</font>
 			<!--<a href="">模块帮助</a>-->
 		</div>
 
@@ -58,13 +160,19 @@
 					<font>用户姓名:</font>
 				</div>
 				<div class="rightCell">
-					<input id="name" class="easyui-textbox" type="text" style="width:100%" />
+					<input id="searchNameTxt" class="easyui-textbox" type="text" style="width:100%" />
 				</div>
 				<div class="leftCell">
 					<font>部门:</font>
 				</div>
 				<div class="rightCell">
-					<input id="deptName" class="easyui-textbox" type="text" style="width:100%" />
+					<input id="searchDeptId" class="easyui-combotree" type="text" style="width:100%" data-options="prompt:'请选择部门',editable:false,url:'/api/org/select/list',
+										method:'get',
+										valueField:'id',
+										textField:'orgName',
+										loadFilter:function(data){
+											return data.result
+										}" />
 				</div>
 				<div class="leftCell"><font>状态:</font>
 				</div>
@@ -78,7 +186,7 @@
 					<font>账户名:</font>
 				</div>
 				<div class="rightCell">
-					<input id="userName" class="easyui-combobox" type="text" style="width:100%" data-options="editable:false" />
+					<input id="searchUserNameTxt" class="easyui-combobox" type="text" style="width:100%" data-options="editable:false" />
 				</div>
 			</div>
 			<div class="row">
@@ -102,18 +210,16 @@
 			<a href="javascript:deleteOrgContents()" class="easyui-linkbutton" iconCls="icon-oto-delete" plain="true">删除</a>
 		</div>
 		<!-- 网格 -->
-		<table id="orgContentsGrid" class="easyui-datagrid" style="width:100%;height:100%" data-options="singleSelect:true,pagination:true,remoteSort:false">
+		<table id="userContentsGrid" class="easyui-datagrid" style="width:100%;height:100%" data-options="singleSelect:true,pagination:true,remoteSort:false">
 			<thead>
 				<tr>
 					<th data-options="field:'ck',checkbox:true"></th>
-					<th data-options="field:'userIdx',width:'4%',sortable:true">序号</th>
 					<th data-options="field:'userNo',width:'10%',sortable:true">用户工号</th>
 					<th data-options="field:'name',width:'8%',sortable:true">用户姓名</th>
 					<th data-options="field:'userName',width:'10%',sortable:true">登录帐号</th>
-					<th data-options="field:'deptName',width:'15%',sortable:true">所属部门</th>
+					<th data-options="field:'orgName',width:'15%',sortable:true">所属部门</th>
 					<th data-options="field:'roleName',width:'15%',sortable:true">当前岗位</th>
-					<th data-options="field:'createDate',width:'12%',sortable:true">入职时间</th>
-					<th data-options="field:'joinDate',width:'12%',sortable:true">上次登录时间</th>
+					<th data-options="field:'joinTime',width:'12%',sortable:true">入职时间</th>
 					<th data-options="field:'status',width:'7%',sortable:true">状态</th>
 				</tr>
 			</thead>

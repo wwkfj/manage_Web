@@ -12,12 +12,9 @@
     <link rel="stylesheet" type="text/css" href="../../easyui/themes/metro/easyui.css" />
 	<link rel="stylesheet" type="text/css" href="../../easyui/themes/icon.css" />
 	<link rel="stylesheet" type="text/css" href="../../css/common.css" />
-	<link rel="stylesheet" href="../../ztree/zTreeStyle/zTreeStyle.css" type="text/css">
 	<script type="text/javascript" src="../../js/jquery-1.11.1.js"></script>
 	<script type="text/javascript" src="../../easyui/jquery.easyui.min.js"></script>
 	<script type="text/javascript" src="../../easyui/locale/easyui-lang-zh_CN.js"></script>
-  	<script type="text/javascript" src="../../ztree/js/jquery.ztree.core.js"></script>
-  	<script type="text/javascript" src="../../ztree/js/jquery.ztree.excheck.js"></script>
   	<script type="text/javascript" src="../../js/common.js"></script>
   </head>
   
@@ -220,7 +217,7 @@
 					var code = data.code;
 					var msg = data.description;
 					if (code == 0) {
-						if (data.result.list.length == 0) {
+						if (data.result.list === undefined ||data.result.list.length == 0) {
 							$('#orgContentsGrid').datagrid('loadData', {
 								total: 0,
 								rows: []
@@ -548,7 +545,7 @@
 					<!--<th data-options="field:'id',width:'4%',sortable:true">序号</th>-->
 					<th data-options="field:'roleCode',width:'10%',sortable:true">岗位编号</th>
 					<th data-options="field:'roleName',width:'15%',sortable:true">岗位名称</th>
-					<th data-options="field:'deptName',width:'15%',sortable:true">所属部门</th>
+					<th data-options="field:'orgName',width:'15%',sortable:true">所属部门</th>
 					<th data-options="field:'createTime',width:'18%',sortable:true">创建时间</th>
 					<th data-options="field:'updateTime',width:'18%',sortable:true">更新时间</th>
 					<th data-options="field:'operate',width:'12%',sortable:true,formatter:operateFormatter">操作</th>
