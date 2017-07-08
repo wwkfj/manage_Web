@@ -48,7 +48,7 @@
 						<input type="checkbox" name="rememberMe" value="true" lay-skin="switch" title="记住帐号"><div class="layui-unselect layui-form-switch"><i></i></div>-->
 					</div>
 					<div class="pull-right login-remember">
-						<img id="valiCode" onclick="tt()" src="/api/validateCode?v=12333" alt="验证码" />
+						<img id="valiCode" onclick="tt()" alt="验证码" />
 					</div>
 					<div class="pull-right">
 						<button class="layui-btn layui-btn-primary login_btn" lay-submit="" lay-filter="login">
@@ -148,9 +148,16 @@
         }
         function tt(){
 //      		$('#valiCode').on('click', function () {
-            document.getElementById("valiCode").setAttribute('src', '/api/validateCode?v=' + new Date().getTime());
+            document.getElementById("valiCode").setAttribute('src', '/api/validateCode?v=' + new Date().getUTCMilliseconds());
 //      });
         }
+        
+        (function(){
+        	   	setTimeout(
+        	    			document.getElementById("valiCode").setAttribute('src', '/api/validateCode?v=' + new Date().getTime()),
+        	    			5000
+        	    )
+        })()
         
     </script>
   </body>

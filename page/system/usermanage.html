@@ -43,6 +43,13 @@
 		
 	}
 	
+	
+	function cancel(){
+		$('#searchUserNameTxt').textbox('setValue','')
+		$('#searchNameTxt').textbox('setValue','')
+		$("#searchDeptId").combotree('setValue',null)
+	}
+	
 	//列表查询
 	function query(){
 		var pagerOptions = $(pager).pagination('options');
@@ -96,17 +103,234 @@
 		});
 	}
 	
+	
+	function findUserDetail(){
+		
+			var row = $('#userContentsGrid').datagrid("getSelected");  
+			if(row == null){
+				showError("请选中一行数据")
+			}
+			var url = '/api/user/'+row.id + '?time='+new Date().getTime()
+			$.ajax({
+				type: "GET",
+				url: url,
+				async: true,
+				beforeSend:ajaxLoading,
+				contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+				success: function(data, textStatus) {
+					ajaxLoadEnd()
+					var code = data.code;
+					var msg = data.description;
+					if (code == 0) {
+						if (isEmpty(data.result)) {
+							showInfo('查询结果为空');
+							return;
+						}
+						var user = data.result;
+						$("#userId").val(user.id)
+						$("#name").textbox('setValue',user.name)
+						$("input[name='gender'][value='"+user.gender+"']").attr('checked',true)
+						$("#birthTime").datebox('setValue',user.birthTime)
+					    $("#joinTime").datebox('setValue',user.joinTime)
+					    $("#userName").textbox('setValue',user.userName)
+					    $("#jobContent").val(user.jobConent)
+					    $("#txtDeptId").combotree('setValue',user.deptId)
+					    $("#txtRoleId").combobox('setValue',user.roleId)
+					} else {
+						showInfo(msg);
+					}
+				},
+				error: function(XMLHttpRequest, textStatus, errorThrown) {
+					ajaxLoadEnd()
+					showError("访问服务失败");
+				}
+			});
+		}
+	
+	//修改页面内容弹出框
+	function updateOrgContent() {
+		
+		findUserDetail();
+	
+		$('#orgContentsDialog').dialog({
+			title: "修改用户"
+		});
+		$('#orgContentsDialog').dialog('open');
+		
+	}
+	
+	function findRoleDetail(roleId){
+			var url = '/api/role/'+roleId + '?time='+new Date()
+			$.ajax({
+				type: "GET",
+				url: url,
+				async: true,
+				beforeSend:ajaxLoading,
+				contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+				success: function(data, textStatus) {
+					ajaxLoadEnd()
+					var code = data.code;
+					var msg = data.description;
+					if (code == 0) {
+						if (isEmpty(data.result)) {
+							showInfo('查询结果为空');
+							return;
+						}
+						var role = data.result;
+						var modulesData = role.modules
+						
+						var modulesMap = {}
+						for(var i=0;i<modulesData.length;i++){
+							modulesMap[modulesData[i].id]=modulesData[i]
+						}
+						var modules = $(".moduleCheck")
+						for (var i=0;i<modules.length;i++) {
+							modules[i].checked=false
+							var moduleId = $(modules[i]).attr("moduleid")
+							if(contains(modulesData,moduleId)){
+							 	modules[i].checked=true
+							 	//取功能权限
+					        		var permissionsNode = $((".permission_")+moduleId)
+					        		if(permissionsNode === undefined)
+					        			continue
+					        		var perData = modulesMap[moduleId].permissions
+					        		for (var j=0;j<permissionsNode.length;j++) {
+					        			permissionsNode[j].checked=false
+					        			var permission = $(permissionsNode[j]).attr("data")
+			        					
+					        			if(containsPermission(perData,jQuery.parseJSON(permission).operate)){
+									 	permissionsNode[j].checked=true
+								    }
+					        		}
+							}
+						 	
+				        		
+					   }
+					} else {
+						showInfo(msg);
+					}
+				},
+				error: function(XMLHttpRequest, textStatus, errorThrown) {
+					ajaxLoadEnd()
+					showError("访问服务失败");
+				}
+			});
+		}
+	
+	    //保存信息
+		function submit() {
+			
+			var name = $("#name").textbox('getValue'),
+				gender = $("input[name='gender'][checked]").val(),
+				birthTime = $("#birthTime").datebox('getValue'),
+			    joinTime = $("#joinTime").datebox('getValue'),
+			    userName = $("#userName").textbox('getValue'),
+			    password = $("#password").textbox('getValue'),
+			    againPassword = $("#agianPassword").textbox('getValue'),
+			    jobConent =$("#jobContent").val(),
+			    deptId = $("#txtDeptId").combotree('getValue'),
+			    roleId = $("#txtRoleId").combobox('getValue'),
+			    id = $("#userId").val();
+			    
+			
+			
+//			var codeReg = /^[a-zA-Z0-9]{1,10}$/;
+//			if(!codeReg.test(roleCode)){
+//				showError("岗位编码必须数字或字母,长度1到10个字符")
+//				return;
+//			}
+			
+			if(isEmpty(name)){
+				showError("姓名不能为空")
+				return;
+			}
+			
+			if( name.length >= 20){
+				showError("姓名长度不能超过20个字符")
+				return;
+			}
+			
+			if(isEmpty(birthTime)){
+				showError("出生年月不能为空")
+				return;
+			}
+			if(isEmpty(birthTime)){
+				showError("入职时间不能为空")
+				return;
+			}
+			
+			if(isEmpty(id) && isEmpty(password)){
+				showError("用户密码不能为空")
+				return;
+			}
+			
+			if(isEmpty(id) && isEmpty(againPassword)){
+				showError("确认密码不能为空")
+				return;
+			}
+			
+			if(isEmpty(deptId)){
+				showError("请选择部门")
+				return;
+			}
+			if(isEmpty(roleId)){
+				showError("请选择部门")
+				return;
+			}
+			
+			 var params = {
+			 	id : $("#userId").val(),
+				name : name,
+				gender : gender,
+				birthTime : birthTime,
+			    joinTime : joinTime,
+			    userName : userName,
+			    password : password,
+			    againPassword : againPassword,
+			    jobConent : jobConent,
+			    deptId : deptId,
+			    roleId : roleId
+			 }
+			 
+			ajaxLoading()
+		
+			$.ajax({
+				type: "post",
+				dataType: "json",
+				data: JSON.stringify(params),
+				url: "/api/saveUser",
+				contentType: "application/json",
+				async: true,
+				success: function(data, res) {
+					ajaxLoadEnd()
+					if(data.code === '0'){
+//						showInfo("保存成功")
+						dialogOrgContentsClose()
+						$('#userContentsGrid').datagrid("reload");
+						query()
+					}else{
+						showError(data.description)
+					}
+				},
+				error: function(res){
+					ajaxLoadEnd()
+					showError("访问服务错误")
+				}
+			});
+		}
+	
 	$(document).ready(function() {
 			
 			//初始化网格
 				$('#userContentsGrid').datagrid({
 //					height: ($(document).height() - otherHeight),
-//					onLoadSuccess: function(data) {
-//						$("#userContentsGrid").datagrid('doCellTip', {
-//							'max-width': '300px',
-//							'delay': 500
-//						});
-//					}
+					onLoadSuccess: function(data) {
+						$(this).datagrid('doCellTip', {
+							'max-width': '300px',
+							'delay': 500
+						});
+						$(this).datagrid("fixRownumber");
+					},
 					rowStyler: function(index,row){
 						if (index%2 != 0){
 							return 'background-color:#F2F2F2;'; // return inline style
@@ -134,15 +358,91 @@
 				checkbox: true,
 				loadFilter: function(data) {
 					return data.result;
-				},
+				}
 			});
+			
+			$("#txtDeptId").combotree({
+			     onChange:function(data){
+			        $('#txtRoleId').combobox({   
+			            url:'/api/org/role/'+data, 
+			            method:'GET',
+			            valueField:'id',  
+			            textField: 'roleName',  
+			            panelHeight:'auto',
+			            loadFilter: function(datat) {
+							return datat.result;
+						}
+			        });  
+			     }    
+		    });
+		    
+		    $("#txtRoleId").combobox({
+		    		onSelect:function(role){
+					findRoleDetail(role.id)
+		    		}
+		    })
 			
 			query()
 			
 //			init()
 
-		get("/api/module/list",{},null,null);
 		});
+		
+		function contains(arr, obj) {  
+		    var i = arr.length;
+		    
+		    while (i--) {  
+		        if (arr[i].id.toString() === obj) {  
+		            return true;  
+		        }  
+		    }  
+		    return false;  
+		} 
+		function containsPermission(arr, obj) {  
+		    var i = arr.length;
+		    
+		    while (i--) {  
+		        if (arr[i].perValue.toString() === obj) {  
+		            return true;  
+		        }  
+		    }  
+		    return false;  
+		} 
+		
+		function formatcheckbox(val, row) {
+			return "<input disabled='true' class='moduleCheck' moduleId='"+row.id+"' type='checkbox' onclick=show('" + row.id + "')  id='check_" + row.id + "' " + (row.checked ? 'checked' : '') + "/>" + row.name;
+		}
+		
+		function formatcheckboxview(val, row,index) {
+			if(row.parentId !== 0 || row.children.length === 0){
+				return "<input disabled='true' type='checkbox' class='permission_"+row.id+"' data='{"+'"moduleId"'+":"+row.id+","+'"operate"'+":"+'"VIEW"'+"}' name='check_"+row.id+"'/>";
+			}
+		}
+		function formatcheckboxadd(val, row,index) {
+			if(row.parentId !== 0 || row.children.length === 0){
+				return "<input disabled='true' type='checkbox' class='permission_"+row.id+"' data='{"+'"moduleId"'+":"+row.id+","+'"operate"'+":"+'"ADD"'+"}' name='check_"+row.id+"'/>";
+			}
+		}
+		function formatcheckboxupdate(val, row,index) {
+			if(row.parentId !== 0 || row.children.length === 0){
+				return "<input disabled='true' type='checkbox' class='permission_"+row.id+"' data='{"+'"moduleId"'+":"+row.id+","+'"operate"'+":"+'"UPDATE"'+"}' name='check_"+row.id+"'/>";
+			}
+		}
+		function formatcheckboxdelete(val, row,index) {
+			if(row.parentId !== 0 || row.children.length === 0){
+				return "<input disabled='true' type='checkbox' class='permission_"+row.id+"' data='{"+'"moduleId"'+":"+row.id+","+'"operate"'+":"+'"DELETE"'+"}' name='check_"+row.id+"'/>";
+			}
+		}
+		function formatcheckboxsubmit(val, row,index) {
+			if(row.parentId !== 0 || row.children.length === 0){
+				return "<input disabled='true' type='checkbox' class='permission_"+row.id+"' data='{"+'"moduleId"'+":"+row.id+","+'"operate"'+":"+'"SUBMIT"'+"}' name='check_"+row.id+"'/>";
+			}
+		}
+		function formatcheckboxcheck(val, row,index) {
+			if(row.parentId !== 0 || row.children.length === 0){
+				return "<input disabled='true' type='checkbox' class='permission_"+row.id+"'data='{"+'"moduleId"'+":"+row.id+","+'"operate"'+":"+'"CHECK"'+"}' name='check_"+row.id+"'/>";
+			}
+		}
 	
   </script>
   
@@ -163,6 +463,12 @@
 					<input id="searchNameTxt" class="easyui-textbox" type="text" style="width:100%" />
 				</div>
 				<div class="leftCell">
+					<font>账户名:</font>
+				</div>
+				<div class="rightCell">
+					<input id="searchUserNameTxt" class="easyui-textbox" type="text" style="width:100%" data-options="editable:true" />
+				</div>
+				<div class="leftCell">
 					<font>部门:</font>
 				</div>
 				<div class="rightCell">
@@ -173,20 +479,6 @@
 										loadFilter:function(data){
 											return data.result
 										}" />
-				</div>
-				<div class="leftCell"><font>状态:</font>
-				</div>
-				<div class="rightCell">
-					<select id="cbStatus" class="easyui-combobox" style="width:100%;" data-options="editable:false">
-						<option value="0">有效</option>
-						<option value="S">无效</option>
-					</select>
-				</div>
-				<div class="leftCell">
-					<font>账户名:</font>
-				</div>
-				<div class="rightCell">
-					<input id="searchUserNameTxt" class="easyui-combobox" type="text" style="width:100%" data-options="editable:false" />
 				</div>
 			</div>
 			<div class="row">
@@ -214,13 +506,12 @@
 			<thead>
 				<tr>
 					<th data-options="field:'ck',checkbox:true"></th>
-					<th data-options="field:'userNo',width:'10%',sortable:true">用户工号</th>
-					<th data-options="field:'name',width:'8%',sortable:true">用户姓名</th>
-					<th data-options="field:'userName',width:'10%',sortable:true">登录帐号</th>
-					<th data-options="field:'orgName',width:'15%',sortable:true">所属部门</th>
-					<th data-options="field:'roleName',width:'15%',sortable:true">当前岗位</th>
-					<th data-options="field:'joinTime',width:'12%',sortable:true">入职时间</th>
-					<th data-options="field:'status',width:'7%',sortable:true">状态</th>
+					<th data-options="field:'index',width:'10%',sortable:true">序号</th>
+					<th data-options="field:'name',width:'15%',sortable:true">用户姓名</th>
+					<th data-options="field:'userName',width:'15%',sortable:true">登录帐号</th>
+					<th data-options="field:'orgName',width:'20%',sortable:true">所属部门</th>
+					<th data-options="field:'roleName',width:'20%',sortable:true">当前岗位</th>
+					<th data-options="field:'joinTime',width:'20%',sortable:true">入职时间</th>
 				</tr>
 			</thead>
 		</table>
@@ -230,19 +521,40 @@
 			<table style="padding-left:15px;padding-right:15px; padding-top:10px;">
 			<tr style="margin-bottom: 10px;">
 				<input id="userId" type="hidden" />
-				<td align="right"><font color="#FF0000">*</font>用户姓名:</td>
+				<td align="right"><font color="#FF0000">*</font>姓名:</td>
 				<td colspan="3" align="left">
 					<input class="easyui-textbox" id="name" style="width: 394px;" data-options="editable:true" />
 				</td>
 			</tr>
 			<tr style="margin-bottom: 10px;">
-				<td align="right"><font color="#FF0000">*</font>用户工号:</td>
+				<td align="right"><font color="#FF0000">*</font>性别</td>
+				<td>
+					<span class="radioSpan">
+		                <input type="radio" checked="true" name="gender" value="MALE">男</input>
+		                <input type="radio" name="gender" value="WOMEN">女</input>
+		            </span>
+				</td>
+			</tr>
+			<!--<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>工号:</td>
 				<td align="left" colspan="3">
 					<input type="text" class="easyui-textbox" id="userCode" style="width: 394px;" data-options="editable:true" />
 				</td>
+			</tr>-->
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>出生年月:</td>
+				<td>
+					<input type="text" class="easyui-datebox" id="birthTime" style="width: 180px;" required="required" />
+				</td>
 			</tr>
 			<tr style="margin-bottom: 10px;">
-				<td align="right"><font color="#FF0000">*</font>账户名:</td>
+				<td align="right"><font color="#FF0000">*</font>入职时间:</td>
+				<td>
+					<input type="text" class="easyui-datebox" id="joinTime" style="width: 180px;" required="required" />
+				</td>
+			</tr>
+			<tr style="margin-bottom: 10px;">
+				<td align="right"><font color="#FF0000">*</font>账户:</td>
 				<td align="left" colspan="3">
 					<input type="text" class="easyui-textbox" id="userName" style="width: 394px;" data-options="editable:true" />
 				</td>
@@ -250,84 +562,69 @@
 			<tr style="margin-bottom: 10px;">
 				<td align="right"><font color="#FF0000">*</font>密码:</td>
 				<td align="left" colspan="3">
-					<input type="text" class="easyui-textbox" id="password" style="width: 394px;" data-options="editable:true" />
+					<input type="password" class="easyui-textbox" id="password" style="width: 394px;" data-options="editable:true" />
 				</td>
 			</tr>
 			<tr style="margin-bottom: 10px;">
 				<td align="right"><font color="#FF0000">*</font>再次输入密码:</td>
 				<td align="left" colspan="3">
-					<input type="text" class="easyui-textbox" id="agianPassword" style="width: 394px;" data-options="editable:true" />
+					<input type="password" class="easyui-textbox" id="agianPassword" style="width: 394px;" data-options="editable:true" />
 				</td>
 			</tr>
 			<tr style="margin-bottom: 10px;">
-				<input id="deptId" type="hidden" />
+				<!--<input id="deptId" type="hidden" />-->
 				<td align="right"><font color="#FF0000">*</font>所属部门</td>
 				<td align="left" colspan="3">
-					<input type="text" class="easyui-combobox" id="deptId" style="width: 394px;" data-options="editable:false" />
+					<input id="txtDeptId" class="easyui-combotree" type="text" style="width:100%" data-options="prompt:'请选择部门',editable:false,url:'/api/org/select/list',
+										method:'get',
+										valueField:'id',
+										textField:'orgName',
+										loadFilter:function(data){
+											return data.result
+										}" />
 				</td>
 			</tr>
+			
 			<tr style="margin-bottom: 10px;">
-				<td align="right"><font color="#FF0000">*</font>入职时间:</td>
-				<td>
-					<input type="text" class="easyui-datebox" id="joinTime" style="width: 172px;" required="required" />
+				<td align="right"><font color="#FF0000"></font>主要工作:</td>
+				<td width="320px">
+					<textarea  id="jobContent"  placeholder='请输入内容，字数不能超过500字' rows="6" maxlength='500' style="width: 100%;border-color:#B6B7B8 ;">
+					</textarea>
 				</td>
 			</tr>
 			<tr style="margin-bottom: 10px;">
 				<td align="right"><font color="#FF0000">*</font>岗位分配:</td>
 				<td width="320px" align="left" colspan="3">
-					<input type="text" class="easyui-combobox" id="txtRoleId" style="width: 394px;" data-options="editable:false" />
+					<input id="txtRoleId" class="easyui-combobox" type="text" style="width:100%" data-options="prompt:'请选择岗位',editable:false" />
 				</td>
 			</tr>
+			
 			<tr style="margin-bottom: 10px;">
 				<td align="right"><font color="#FF0000"></font>权限显示:</td>
 				<!-- 权限网格 -->
 				<td width="320px" align="left" colspan="3">
-				<table id="permissionGrid" class="easyui-datagrid" style="width:394px;height:100%" data-options="pagination:false,remoteSort:false">
+					<table id="moduelPermissionGrid"  class="easyui-treegrid" style="width:393px;height:260px;overflow-x:scroll; overflow-y:scroll;"
+					  idField="id" treeField="name" 
+	               		data-options="checkbox:true,singleSelect:false"
+	                >
 					<thead>
-						<tr>
-							<th data-options="field:'userIdx',width:'40%',sortable:true">模块(菜单)</th>
-							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
+						<tr frozen="true">
+							<th field="region" width="150">模块权限</th>
+							<th colspan="6">功能权限</th>
 						</tr>
-						<tr>
-							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
-							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
-						</tr>
-						<tr>
-							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
-							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
-						</tr>
-						<tr>
-							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
-							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
-						</tr>
-						<tr>
-							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
-							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
-						</tr>
-						<tr>
-							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
-							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
-						</tr>
-						<tr>
-							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
-							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
-						</tr>
-						<tr>
-							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
-							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
-						</tr>
-						<tr>
-							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
-							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
-						</tr>
-						<tr>
-							<th data-options="field:'userIdx',width:'40%',sortable:true">模块</th>
-							<th data-options="field:'userNo',width:'60%',sortable:true">权限</th>
+						<tr frozen="true">
+							<th field="name" width="35%" formatter="formatcheckbox">菜单</th>
+							<th field="view" width="8%" align="center" formatter="formatcheckboxview">查看</th>
+							<th field="add" width="8%" align="center" formatter="formatcheckboxadd">新增</th>
+							<th field="update" width="8%" align="center" formatter="formatcheckboxupdate">修改</th>
+							<th field="delete" width="8%" align="center" formatter="formatcheckboxdelete">删除</th>
+							<th field="submit" width="8%" align="center" formatter="formatcheckboxsubmit">提交</th>
+							<th field="check" width="8%" align="center" formatter="formatcheckboxcheck">审核</th>
 						</tr>
 					</thead>
 				</table>
 				</td>
-			</tr>
+			</tr>	
 			</table>
 			<div id="dlg-buttons">
 				<a href="javascript:submit()" class="easyui-linkbutton" iconCls="icon-oto-save">保存</a>
