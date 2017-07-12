@@ -27,14 +27,14 @@
 	function dialogOrgContentsClose() {
 		$('#orgContentsDialog').dialog('close');
 	}
-	 //关闭添加页面内容弹出框
+	 //添加页面内容弹出框
 	function dialogOrgContentsOpen() {
 		$('#orgContentsDialog').dialog('open');
 	}
 	
-	 //关闭添加页面内容弹出框
+	 //添加页面内容弹出框
 	function addOrgContents() {
-		
+		clearContent()
 		
 		$('#orgContentsDialog').dialog({
 			title:"添加用户"
@@ -48,6 +48,21 @@
 		$('#searchUserNameTxt').textbox('setValue','')
 		$('#searchNameTxt').textbox('setValue','')
 		$("#searchDeptId").combotree('setValue',null)
+	}
+	
+	function clearContent(){
+		$("#userId").val("")
+		$("#name").textbox('setValue',"")
+		$("input[name='gender'][value='WOMAN']").removeAttr('checked')
+		$("input[name='gender'][value='MALE']").removeAttr('checked')
+		$("input[name='gender'][value='MALE']").attr('checked','checked')
+		$("input[name=gender]:eq(0)").attr('checked',true)
+		$("#birthTime").datebox('setValue',"")
+	    $("#joinTime").datebox('setValue',"")
+	    $("#userName").textbox('setValue',"")
+	    $("#jobContent").val("")
+	    $("#txtDeptId").combotree('setValue',"")
+	    $("#txtRoleId").combobox('setValue',"")
 	}
 	
 	//列表查询
@@ -104,13 +119,9 @@
 	}
 	
 	
-	function findUserDetail(){
+	function findUserDetail(userId){
 		
-			var row = $('#userContentsGrid').datagrid("getSelected");  
-			if(row == null){
-				showError("请选中一行数据")
-			}
-			var url = '/api/user/'+row.id + '?time='+new Date().getTime()
+			var url = '/api/user/'+userId + '?time='+new Date().getTime()
 			$.ajax({
 				type: "GET",
 				url: url,
@@ -129,11 +140,16 @@
 						var user = data.result;
 						$("#userId").val(user.id)
 						$("#name").textbox('setValue',user.name)
-						$("input[name='gender'][value='"+user.gender+"']").attr('checked',true)
+						
+						$("input[name='gender'][value='"+user.gender+"']").attr('checked','checked')
+						if('MALE' ===  user.gender)
+							$("input[name='gender'][value='WOMAN']").removeAttr('checked')
+						else
+							$("input[name='gender'][value='MALE']").removeAttr('checked')
 						$("#birthTime").datebox('setValue',user.birthTime)
 					    $("#joinTime").datebox('setValue',user.joinTime)
 					    $("#userName").textbox('setValue',user.userName)
-					    $("#jobContent").val(user.jobConent)
+					    $("#jobContent").val(user.jobContent)
 					    $("#txtDeptId").combotree('setValue',user.deptId)
 					    $("#txtRoleId").combobox('setValue',user.roleId)
 					} else {
@@ -149,8 +165,12 @@
 	
 	//修改页面内容弹出框
 	function updateOrgContent() {
-		
-		findUserDetail();
+		var row = $('#userContentsGrid').datagrid("getSelected");  
+		if(row == null){
+			showError("请选中一行数据")
+			return
+		}
+		findUserDetail(row.id);
 	
 		$('#orgContentsDialog').dialog({
 			title: "修改用户"
@@ -227,7 +247,7 @@
 			    userName = $("#userName").textbox('getValue'),
 			    password = $("#password").textbox('getValue'),
 			    againPassword = $("#agianPassword").textbox('getValue'),
-			    jobConent =$("#jobContent").val(),
+			    jobContent =$("#jobContent").val(),
 			    deptId = $("#txtDeptId").combotree('getValue'),
 			    roleId = $("#txtRoleId").combobox('getValue'),
 			    id = $("#userId").val();
@@ -269,6 +289,11 @@
 				return;
 			}
 			
+			if(password != againPassword){
+				showError("两次密码输入不一致")
+				return;
+			}
+			
 			if(isEmpty(deptId)){
 				showError("请选择部门")
 				return;
@@ -287,7 +312,7 @@
 			    userName : userName,
 			    password : password,
 			    againPassword : againPassword,
-			    jobConent : jobConent,
+			    jobContent : jobContent,
 			    deptId : deptId,
 			    roleId : roleId
 			 }
@@ -530,7 +555,7 @@
 				<td align="right"><font color="#FF0000">*</font>性别</td>
 				<td>
 					<span class="radioSpan">
-		                <input type="radio" checked="true" name="gender" value="MALE">男</input>
+		                <input type="radio" name="gender" value="MALE">男</input>
 		                <input type="radio" name="gender" value="WOMEN">女</input>
 		            </span>
 				</td>
