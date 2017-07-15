@@ -35,20 +35,20 @@ $(function(){
         if(!hasToken)
         		return;
         fileName = dir+"/"+type+"/"+new Date().getTime()+$file.name ;
-        var form = new FormData();
-        form.append("key",fileName)
-        form.append("Filename",fileName)
-		form.append("policy",policyBase64)
-		form.append("signature",signature)
-		form.append("OSSAccessKeyId",accessid)
-		form.append("success_action_status",'200')//让服务端返回200,不然，默认会返回204
-		form.append('file',$("#importFileForm"))
+        var formData = new FormData();
+        formData.append("key",fileName)
+        formData.append("Filename",fileName)
+		formData.append("policy",policyBase64)
+		formData.append("signature",signature)
+		formData.append("OSSAccessKeyId",accessid)
+		formData.append("success_action_status",'200')//让服务端返回200,不然，默认会返回204
+		formData.append('file',$file)
 		
 		//ajax 上传文件到OSS
 		$.ajax({
             url:host,
             type:"POST",
-            data:form,
+            data:formData,
             processData:false,
             contentType:false,
             success:function(data){
