@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script src="//cdn.bootcss.com/socket.io/2.0.3/socket.io.js"></script>
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../common/js/sccl-util.js" ></script>
+		<script type="text/javascript" src="../common/layui/layui.js" ></script>
+		<script type="text/javascript" src="http://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+		<link rel="stylesheet" href="../common/layui/css/layui.css" />
+		<link rel="stylesheet" href="../css/pagination.css">
+		<style>
+		body {
+		    padding: 20px;
+		}
+		#console {
+		    height: 400px;
+		    overflow: auto;
+		}
+		.username-msg {
+		    color: orange;
+		}
+		.connect-msg {
+		    color: green;
+		}
+		.disconnect-msg {
+		    color: red;
+		}
+		.send-msg {
+		    color: #888
+		}
+	</style>
+	</head>
+	<body>
+	    <div class="layui-tab layui-tab-brief" lay-filter="messageTab">
+		  <ul class="layui-tab-title">
+		    <li class="layui-this">未读消息</li>
+		    <li>已读消息</li>
+		  </ul>
+		  <div class="layui-tab-content layui-form">
+		    <div class="layui-tab-item layui-show">
+		    	<table id="dateTable" class="layui-table">
+			    <thead>
+			    <tr>
+			        <th><input type="checkbox" class="my-checkbox" lay-skin="primary"></th>
+			        <th>标题</th>
+			        <th>发送人</th>
+			        <th>发送时间</th>
+			        <th>操作</th>
+			    </tr>
+			    </thead>
+			    <tbody></tbody>
+			</table>
+		    </div>
+		    <div class="layui-tab-item">
+		    	
+		    </div>
+		  </div>
+		</div>
+	    <br />
+	    <div id="console" class="well"></div>
+	    <form class="well form-inline" onsubmit="return false;">
+	        <input id="name" class="input-xlarge" type="text" placeholder="用户名称. . . " />
+	        <input id="msg" class="input-xlarge" type="text" placeholder="发送内容. . . " />
+	        <button type="button" onClick="sendMessage()" class="btn">Send</button>
+	        <button type="button" onClick="sendDisconnect()" class="btn">Disconnect</button>
+	    </form>
+	    <i class="layui-icon" style="font-size: 30px; color: #1E9FFF;">&#xe611;</i>
+	</body>
+	<script type="text/javascript">
+	
+		//layui 模块化入口	
+		layui.config({
+		  base: '../js/' //你的模块目录
+		}).extend({
+//			message:'message',
+			data_table:'data_table'
+		});
+		
+		 // layui方法
+	    layui.use(['form','layer','data_table'], function(){
+	
+	        // 操作对象
+	        var form           = layui.form()
+	        ,layer          = layui.layer
+	        ,datatable       = layui.data_table
+	        ,$              = layui.jquery;
+	        
+	        // 初始化表格
+	        $('#dateTable').DataTable({
+	            "dom": '<"top">rt<"bottom"flp><"clear">',
+	            "autoWidth": false,                     // 自适应宽度
+	            "stateSave": true,                      // 刷新后保存页数
+	            "order": [[ 1, "desc" ]],               // 排序
+	            "searching": false,                     // 本地搜索
+	            "info": true,                           // 控制是否显示表格左下角的信息
+	            "stripeClasses": ["odd", "even"],       // 为奇偶行加上样式，兼容不支持CSS伪类的场合
+	            "aoColumnDefs": [{                      // 指定列不参与排序
+	                "orderable": false,
+	                "aTargets": [0,4]                   // 对应你的表格的列数
+	            }],
+	            "pagingType": "full_numbers",           // 分页样式 simple,simple_numbers,full,full_numbers
+	            "language": {                           // 国际化
+	                "url":'../json/language.json'
+	            },
+	            "ajax": {
+	                "url": "../json/data_table.json" // ajax
+	            },
+	            "sServerMethod" : "GET",               // POST
+	            "deferRender": true,                    // 当处理大数据时，延迟渲染数据，有效提高Datatables处理能力
+	            "columns": [                            // 自定义数据列
+	                {data:function(obj){                // 后台需要返回[data=>['id'=>1,ip=>0.0.0.0]]这样的数据
+	                    return '<input type="checkbox" class="my-checkbox" lay-filter="oneChoose" lay-skin="primary" data-id="'+obj.id+'"/>';
+	                }},
+	                {data: 'account'},
+	                {data: 'auth_group_name'},
+	                {data: 'last_login_time'},
+	                {data: function(obj){
+	                    return  '<a class="layui-btn layui-btn-small btn-edit" data-id="'+obj.id+'">查看</a>' +
+	                            '<a class="layui-btn layui-btn-small layui-btn-normal btn-edit" data-id="'+obj.id+'">编辑</a>' +
+	                            '<a class="layui-btn layui-btn-small layui-btn-danger btn-edit" data-id="'+obj.id+'">删除</a>';
+	                },width:'155'}
+	            ],
+	            "stateSaveParams": function () {           // 初始化完成调用事件
+	                // 重新渲染form checkbox 如果你要使用layui的复选框样式打开这个
+	                 form.render('checkbox');
+	            }
+	        });
+	
+	        // 例:获取ids
+	        $(document).on('click','#btn-delete-all', function(){
+	            // getIds(table对象,获取input为id的属性)
+	            var list = datatable.getIds($('#dateTable'),'data-id');
+	            if(list == null || list == ''){
+	                layer.msg('未选择');
+	            }else{
+	                layer.msg(list);
+	            }
+	        });
+
+	        // you code ...
+			
+	
+	    });
+		
+		
+		
+		var socket;
+		function startSocket(url){
+			socket = io.connect(url);
+		    socket.on('connect',function() {
+		        output('<span class="connect-msg">Client has connected to the server!</span>');
+		    });
+		    
+		    socket.on('active_push', function(data) {
+		        output('<span class="username-msg">' + data.title + ' : </span>'
+		                + data.content);
+		    });
+		    
+		    socket.on('disconnect',function() {
+		        output('<span class="disconnect-msg">The client has disconnected! </span>');
+		    });
+		}
+		
+	    
+	    
+	    function sendDisconnect() {
+	        socket.disconnect();
+	    }
+	    
+	    function sendConnect(){
+	    		socket.connect();
+	    }
+	    
+	    function sendMessage() {
+	        var userName = $("#name").val()
+	        var message = $('#msg').val();
+	        $('#msg').val('');
+	        socket.emit('active_push', userName+message
+//	        {
+//	            userName : userName,
+//	            message : message
+//	        }
+	        );
+	    }
+	    
+	    function output(message) {
+	        var currentTime = "<span class='time' >" + new Date() + "</span>";
+	        var element = $("<div>" + currentTime + " " + message + "</div>");
+	        $('#console').prepend(element);
+	    }
+	    
+	    function getToken(){
+	    		var socketurl ="http://127.0.0.1:7878";
+	    		ajax("/api/websocket/token?_"+new Date().getTime(),{},"json",function(data){
+	    			if(data.code === '0'){
+	    				startSocket(socketurl+"?token="+data.result.token+"&paramId="+data.result.userId);
+	    			}
+	    		})
+	    }
+	    
+	    getToken();
+	</script>
+</html>

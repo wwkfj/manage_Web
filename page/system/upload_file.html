@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>文件上传</title>
+		<link rel="stylesheet" type="text/css" href="../../easyui/themes/metro/easyui.css" />
+		<link rel="stylesheet" type="text/css" href="../../easyui/themes/icon.css" />
+		<link rel="stylesheet" type="text/css" href="../../css/common.css" />
+		<script type="text/javascript" src="../../js/jquery-1.11.1.js"></script>
+		<script type="text/javascript" src="../../easyui/jquery.easyui.min.js"></script>
+		<script type="text/javascript" src="../../easyui/locale/easyui-lang-zh_CN.js"></script>
+	</head>
+	<body>
+		 
+			    <form id="importFileForm" method="post" enctype="multipart/form-data" style="display:block">
+			        <table style="margin:5px;height:45px;">
+			            <tr>
+			                <td>请选择文件</td>
+			                <td width="5px;"></td>
+			                <td>
+			                	<input  class="easyui-filebox" id="fileImport" name="file" style="width:260px;" data-options="prompt:'请选择文件'">
+			                </td>
+			                <td></td>
+			            </tr>
+			            <tr>
+			                <td colspan="4"><label id="fileName" /></td>
+			            </tr>
+			            <tr>
+			                <td colspan="4">
+		                    <label id="uploadInfo" />
+		                </td>
+		            </tr>
+		        </table>
+		        <div style="text-align:left;clear:both;margin:5px;">
+		            <a id="uploadFile" class="easyui-linkbutton" data-options="iconCls:'icon-ok'" data-bind="click:importFileClick" href="javascript:void(0)">上传</a>
+		        </div>
+		    </form>
+	</body>
+	<script>
+		var policyBase64,accessid,signature,host,$file;
+		$('#fileImport').filebox({
+		    buttonText: '选择文件',
+		    buttonAlign: 'left',
+		    onChange:function(){
+				$("#uploadInfo").text("")
+	    			$("#uploadInfo").css("color","")
+	    			$file = $(this).find('input[class="textbox-value"]')
+	    			$("#fileName").text($file.name)
+			}
+		})
+		
+		
+		$(function(){
+			
+		    $('#uploadFile').bind('click', function(){
+		    		var file = $("#fileImport").filebox("getValue");
+		    		if(file.length == 0 ){
+		    			$("#uploadInfo").text("文件不能为空")
+		    			$("#uploadInfo").css("color","red")
+		    			return
+		    		}
+		    		//获取oss token
+		        getOsstoken()
+		        var form = new FormData();
+		        form.append("key","file/"+$("#fileName").text())
+		        form.append("Filename","file/1234.png")
+				form.append("policy",policyBase64)
+				form.append("signature",signature)
+				form.append("OSSAccessKeyId",accessid)
+				form.append("success_action_status",'200')//让服务端返回200,不然，默认会返回204
+				form.append('file',$("#importFileForm"))
+				
+				//ajax 上传文件到OSS
+				$.ajax({
+	                url:host,
+	                type:"POST",
+	                data:form,
+	                processData:false,
+	                contentType:false,
+	                success:function(data){
+	                    debugger
+	                    console.log("over..");
+	                }
+				});
+		        
+		    });
+		});
+		
+		function getOsstoken(){
+//			$.get('/api/oss/token', 
+//				
+//				function (data,res) {
+//			        if (data.code == 0) {
+//						policyBase64 = data.result.policy;
+//						accessid     = data.result.accessid;
+//						signature     = data.result.signature;
+//						host = data.result.host;
+//			        }
+//			    }, 
+//				'json'
+//			);
+			
+			$.ajax({
+	                url:'/api/oss/token?time='+new Date().getMilliseconds().toString(),
+	                type:"GET",
+	                data:{},
+	                processData:false,
+	                async : false,
+	                contentType:false,
+	                success:function(data){
+		                	if (data.code == 0) {
+							policyBase64 = data.result.policy;
+							accessid     = data.result.accessid;
+							signature     = data.result.signature;
+							host = data.result.host;
+				        }
+	                    debugger
+	                    console.log("over..");
+	                }
+				});
+		}
+		
+	</script>
+</html>

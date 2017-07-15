@@ -1,0 +1,254 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+	<meta name="renderer" content="webkit|ie-comp|ie-stand">
+	<meta name="keywords" content="项目创建管理">
+	<meta name="description" content="后台管理系统。">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta http-equiv="Cache-Control" content="no-siteapp" />
+    <title>项目创建管理</title>
+    <link rel="stylesheet" type="text/css" href="../../easyui/themes/metro/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="../../easyui/themes/icon.css" />
+	<link rel="stylesheet" type="text/css" href="../../css/common.css" />
+	<script type="text/javascript" src="../../js/jquery-1.11.1.js"></script>
+	<script type="text/javascript" src="../../easyui/jquery.easyui.min.js"></script>
+	<script type="text/javascript" src="../../easyui/locale/easyui-lang-zh_CN.js"></script>
+  	<script type="text/javascript" src="../../js/common.js"></script>
+  	<script type="text/javascript" src="../../js/page/projectmanage.js"></script>
+  	<script type="text/javascript" src="../../js/upload.js"></script>
+  	
+  </head>
+  
+  <style>
+  	.tree-folder{
+  		background: url();
+  		width: 5px;
+  		height: 5px;
+  	}
+  	
+  	.tree-file{
+  		background: url();
+  		height: 5px;
+  		width: 5px;
+  	}
+  	.toolselect:hover{
+  		background-color:#EBECED ;
+  		width: 51px;
+  		cursor: pointer;
+  		border-radius: 5px;
+  	}
+  </style>
+
+  <body onload="init()">
+	<!-- 标题 -->
+		<div class="headerTitle">
+			<font>项目创建管理</font>
+			<!--<a href="">模块帮助</a>-->
+		</div>
+
+		<!-- 查询条件 -->
+		<div class="searchPanel">
+			<div class="row">
+				<div class="leftCell">
+					<font>项目类别:</font>
+				</div>
+				<div class="rightCell">
+					<input id="searchProjectName" class="easyui-combobox" type="text" style="width:100%" 
+						data-options="prompt:'请选择部门',valueField: 'value',
+						textField: 'label',
+						data: [{
+							label: '房建',
+							value: 'HOUSE'
+						},{
+							label: '市政',
+							value: 'CITY'
+						}]"/>
+				</div>
+				<div class="leftCell">
+					<font>项目名称:</font>
+				</div>
+				<div class="rightCell">
+					<input id="searchProjectName" class="easyui-textbox" type="text" style="width:100%" />
+				</div>
+				<div class="leftCell">
+					<font>负责人:</font>
+				</div>
+				<div class="rightCell">
+					<input id="searchUserName" class="easyui-textbox" type="text" style="width:100%" />
+				</div>
+				<div class="leftCell">
+					<font>责任部门:</font>
+				</div>
+				<div class="rightCell">
+					<input id="searchDeptId" class="easyui-combotree" type="text" style="width:100%" data-options="prompt:'请选择部门',editable:false,url:'/api/org/select/list',
+										method:'get',
+										valueField:'id',
+										textField:'orgName',
+										loadFilter:function(data){
+											return data.result
+										}" />
+				</div>
+			</div>
+			<div class="row">
+				<div class="leftCell">
+					<font>开始日期:</font>
+				</div>
+				<div class="rightCell">
+					<input id="searchStartTime" class="easyui-datebox" type="text" style="width:100%" />
+				</div>
+				<div class="leftCell">
+					<font>完成日期:</font>
+				</div>
+				<div class="rightCell">
+					<input id="searchCompletedTime" class="easyui-datebox" type="text" style="width:100%" />
+				</div>
+			</div>
+			<div class="row">
+				<div style="width:20%;min-width:120px;height:30px;float:right;text-align:right;margin-right: 27px;">
+					<a href="javascript:query()" class="easyui-linkbutton" data-options="iconCls:'icon-oto-search'">查询</a>
+					<a href="javascript:cancel()" class="easyui-linkbutton" data-options="iconCls:'icon-oto-reset'">重置</a>
+				</div>
+				<div style="clear:both"></div>
+			</div>
+		</div>
+
+		<!-- 网格标题 -->
+		<div class="gridTitle">
+			<font class="titleNameFont">明细信息</font>
+		</div>
+		<div id="toolDialog" class="easyui-dialog" closed="true" title="选择你创建的项目" style="height: 150px;" data-options="modal:true ">
+			   <table style="position: inherit;top: 10px;margin-top: 15px;"> 
+			   		<tr>
+			   			<td style="width: 100px;" align="center">
+					  	 	<img data="CITY" class="toolselect" src="../../image/city_build.png" width="50px">
+					   	</td>
+					   	<td style="width: 100px;" align="center">
+						    <img data="HOUSE" class="toolselect" src="../../image/house_build.png" width="50px">
+					    </td>
+				    </tr>
+				    <tr>
+			   			<td style="width: 100px;" align="center">
+					  	 	市政
+					   	</td>
+					   	<td style="width: 100px;" align="center">
+						    房建
+					    </td>
+				    </tr>
+			   </table>
+			   <!--<a href="javascript:toolClose()" class="easyui-linkbutton" style="position: inherit;" iconCls="icon-oto-delete">取消</a>-->
+		</div>
+
+		<!-- 网格按钮栏 -->
+		<div class="gridBtnBar">
+			<a href="javascript:addContents()" class="easyui-linkbutton" iconCls="icon-oto-add" plain="true">新增</a>
+			<a href="javascript:updateContent()" class="easyui-linkbutton" iconCls="icon-oto-edit" plain="true">修改</a>
+			<a href="javascript:deleteData()" class="easyui-linkbutton" iconCls="icon-oto-delete" plain="true">删除</a>
+		</div>
+		<!-- 网格 -->
+		<table id="contentsGrid" class="easyui-datagrid" style="width:100%;height:100%" data-options="singleSelect:true,pagination:true,remoteSort:false,rownumbers:true">
+			<thead>
+				<tr>
+					<th data-options="field:'ck',checkbox:true"></th>
+					<!--<th data-options="field:'id',width:'4%',sortable:true">序号</th>-->
+					<th data-options="field:'projectNo',width:'10%',sortable:true">项目编号</th>
+					<th data-options="field:'name',width:'15%',sortable:true">项目名称</th>
+					<th data-options="field:'introduction',width:'15%',sortable:true">项目简介</th>
+					<th data-options="field:'userName',width:'15%',sortable:true">负责人</th>
+					<th data-options="field:'orgName',width:'15%',sortable:true">责任部门</th>
+					<th data-options="field:'startTime',width:'18%',sortable:true">开始时间</th>
+					<th data-options="field:'operate',width:'12%',sortable:true,formatter:operateFormatter">操作</th>
+				</tr>
+			</thead>
+		</table>
+		
+		<!--添加内容弹出框-->
+		<div id="contentsDialog" class="easyui-dialog" closed="false" title= "页面内容" style="width:520px;height:460px; " data-options="buttons: '#dlg-buttons',modal:true ">
+			<table id="contentsTable" style="padding-left:15px;padding-right:15px; padding-top:10px;">
+				<tr style="margin-bottom: 10px;">
+					<input id="txtProjectId" type="hidden" />
+					<td align="right"><font color="#FF0000">*</font>项目编号</td>
+					<td colspan="3" align="left">
+						<input class="easyui-textbox" id="txtProjectNo" style="width: 394px;" 
+							data-options="prompt:'请输入项目编号',editable:true" />
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>项目名称</td>
+					<td colspan="3" align="left">
+						<input class="easyui-textbox" id="txtName" style="width: 394px;" 
+							data-options="prompt:'请输入项目名称',editable:true" />
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>责任部门:</td>
+					<td align="left" colspan="3">
+						<select id="txtDeptId" class="easyui-combotree" iconCls="" style="width:394px;"
+						         data-options="prompt:'请选择责任部门',editable:false,url:'/api/org/select/list',
+											method:'get',
+											valueField:'id',
+											textField:'orgName',
+											loadFilter:function(data){
+												return data.result
+											}">
+						</select>
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>负责人:</td>
+					<td align="left" colspan="3">
+						<input type="text" class="easyui-combobox" id="txtUser" style="width: 394px;" data-options="prompt:'请输入责任名称',editable:true" />
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>项目开始时间:</td>
+					<td align="left" colspan="3">
+						<input type="text" class="easyui-datetimebox" id="txtStartTime" style="width: 394px;" data-options="prompt:'请输入项目开始时间',editable:true" />
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>项目简介:</td>
+					<td align="left" colspan="3">
+						<textarea  id="txtIntroduction" rows="5" style="width: 388px;color:#5F5F5F;" placeholder="请输入项目简介" >
+						</textarea>
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>备注:</td>
+					<td align="left" colspan="3">
+						<textarea  id="txtNote" rows="3" style="width: 388px;color:#5F5F5F;" placeholder="请输入备注" >
+						</textarea>
+					</td>
+				</tr>
+				<!--文件上传 开始-->
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>附件:</td>
+					<td align="left" colspan="2">
+						<input id="fileUrl_1" type="hidden" />
+						<form id="importFileForm" enctype="multipart/form-data">
+						<input id="fileImport_1" type="text" class="easyui-filebox" id="file" style="width: 320px;" data-options="prompt:'请选择附件',buttonText:'选择附件',accept:'image/*'" />
+						</form>
+					</td>
+					<td align="left" colspan="1">
+						<a href="javascript:void(0);" id="uploadFile" class="easyui-linkbutton" iconCls="icon-oto-export" >上传</a>
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000"></font></td>
+					<td align="left" colspan="3">
+						<div id="uploadprogressbar" class="easyui-progressbar" style="width:100px; height: 12px;display: none;"></div>  
+					</td>
+				</tr>
+				<!--文件上传 上传-->
+			</table>
+			
+			
+			<div id="dlg-buttons">
+				<a href="javascript:submit()" class="easyui-linkbutton" iconCls="icon-oto-save">保存</a>
+				<a href="javascript:dialogContentsClose()" class="easyui-linkbutton" iconCls="icon-oto-delete">关闭</a>
+			</div>
+		</div>
+		
+  </body>
+</html>
