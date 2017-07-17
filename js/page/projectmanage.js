@@ -5,7 +5,7 @@ $(document).ready(function() {
 	//初始化网格
 	$('#contentsGrid').datagrid({
 		onLoadSuccess: function(data) {
-			$("#orgContentsGrid").datagrid('doCellTip', {
+			$("#contentsGrid").datagrid('doCellTip', {
 				'max-width': '300px',
 				'delay': 500
 			});
@@ -28,27 +28,23 @@ $(document).ready(function() {
 		displayMsg: '当前显示 {from} - {to} 条记录		共 {total} 条记录'
 	});
 
-//	$('#moduelPermissionGrid').treegrid({
-//		url: '/api/module/list', //访问后台的地址 
-//		method: 'get',
-//		idField: 'id',
-//		treeField: 'name',
-//		checkbox: true,
-//		loadFilter: function(data) {
-//			return data.result;
-//		},
-//	});
-
 	query()
 
 	init()
 	
 	$(".toolselect").click(event,function(){
 		projectType = $(event.target).attr("data")
+		$("#txtProjectType").val(projectType)
 		$('#toolDialog').dialog('close')
 		dialogContentsOpen()
 	})
 	
+	$("#txtDeptId").combotree({
+		onSelect:function(rec){
+            var url = '/api/org/user/'+rec.id;
+            $('#txtUser').combobox('reload', url);
+        }
+	})
 });
 
 function init() {
@@ -59,11 +55,12 @@ function init() {
 //关闭添加页面内容弹出框
 function dialogContentsClose() {
 	$('#contentsDialog').dialog('close');
+	clearContent()
 }
 //打开添加页面内容弹出框
 function toolDialogContentsOpen() {
-	
 	$('#toolDialog').dialog('open');
+	clearContent()
 }
 
 function dialogContentsOpen() {
@@ -85,17 +82,43 @@ function addContents() {
 }
 
 //打开修改页面内容弹出框
-function updateContent() {
-
+function updateContent(id) {
+	clearContent()
 	$('#contentsDialog').dialog({
 		title: "编辑项目"
 	});
 	$('#contentsDialog').dialog('open');
-
+	findDetail(id)
 }
 
 function uploadFile(){
 	alert($(this).attr("class"))
+}
+
+function clearContent(){
+	$("#txtProjectId").val("")
+	$("#txtProjectNo").textbox('setValue','')
+	$("#txtProjectType").val("")
+	$("#txtName").textbox('setValue','')
+	$("#txtDeptId").combotree('setValue','')
+	$("#txtUser").combobox('setValue','')
+	$("#txtStartTime").datetimebox('setValue','')
+	$("#txtNote").val("")
+	$("#fileUrl_1").val("")
+	$("#txtIntroduction").val("")
+}
+
+function setData(data){
+	$("#txtProjectId").val(data.id)
+	$("#txtProjectNo").textbox('setValue',data.projectNo)
+	$("#txtProjectType").val(data.projectType)
+	$("#txtName").textbox('setValue',data.name)
+	$("#txtDeptId").combotree('setValue',data.orgId)
+	$("#txtUser").combobox('setValue',data.userId)
+	$("#txtStartTime").datetimebox('setValue',data.startTime)
+	$("#txtNote").val(data.comment)
+	$("#fileUrl_1").val(data.file)
+	$("#txtIntroduction").val(data.introduction)
 }
 
 //列表查询
@@ -120,55 +143,41 @@ function query() {
 	var searchParamStr = JSON.stringify(searchParam);
 
 	$('#contentsGrid').datagrid("loading", "玩命加载。。。");
-
-	$.ajax({
-		type: "POST",
-		url: '/api/project/list',
-		async: true,
-		data: searchParamStr,
-		contentType: 'application/json', // 告诉jQuery不要去设置Content-Type请求头
-		success: function(data, textStatus) {
-			$('#contentsGrid').datagrid("loaded");
-			var code = data.code;
-			var msg = data.description;
-			if(code == 0) {
-				if(data.result.list === undefined || data.result.list.length == 0) {
-					$('#contentsGrid').datagrid('loadData', {
-						total: 0,
-						rows: []
-					}); //清空网格数据
-					showInfo('查询结果为空');
-					return;
-				}
-				$('#contentsGrid').datagrid('loadData', {
-					"total": data.result.totalCount,
-					"rows": data.result.list
-				});
-			} else {
-				showInfo(msg);
-			}
-		},
-		error: function(XMLHttpRequest, textStatus, errorThrown) {
-			$('#contentsGrid').datagrid("loaded");
-			showError("访问服务失败");
+	
+	post("/api/project/list",searchParamStr,'json',function(data){
+		if(data.result.list === undefined || data.result.list.length == 0) {
+			$('#contentsGrid').datagrid('loadData', {
+				total: 0,
+				rows: []
+			}); //清空网格数据
+			showInfo('查询结果为空');
+			return;
 		}
-	});
+		$('#contentsGrid').datagrid('loadData', {
+			"total": data.result.totalCount,
+			"rows": data.result.list
+		});
+	})
 }
 //保存岗位
-function submit() {
+function submit(status) {
 	var params={
-       			id:$("#txtProjectId").val(),
+       		   id:$("#txtProjectId").val(),
 	    projectNo:$("#txtProjectNo").textbox('getValue'),
-	  projectType:projectType,
+	  projectType:$("#txtProjectType").val(),
 		     name:$("#txtName").textbox('getValue'),
 		    orgId:$("#txtDeptId").combobox('getValue'),
 		   userId:$("#txtUser").combobox('getValue'),
-		startTime:$("#txtStartTime").datebox('getValue'),
+		startTime:$("#txtStartTime").datetimebox('getValue'),
 		   common:$("#txtNote").val(),
 		     file:$("#fileUrl_1").val(),
-     introduction:$("#txtIntroduction").val()
+     introduction:$("#txtIntroduction").val(),
+           status:status
      }
-
+	if(isEmpty(params.projectType)) {
+		showError("项目类别不能为空")
+		return;
+	}
 	var noReg = /^[a-zA-Z0-9]{1,30}$/;
 	if(!noReg.test(params.projectNo)) {
 		showError("项目编号必须数字或字母,长度1到30个字符")
@@ -215,135 +224,84 @@ function submit() {
 		return;
 	}
 
-	
-
-	if(params.modules.length === 0) {
-		showError("请选择模块菜单")
-		return;
-	}
-
 	ajaxLoading()
+	
+	post("/api/project/save",JSON.stringify(params),"json",function(data){
+		//showInfo("保存成功")
+		dialogContentsClose()
+		$('#contentsGrid').datagrid("reload");
+		query()
+	})
 
-	$.ajax({
-		type: "post",
-		dataType: "json",
-		data: JSON.stringify(params),
-		url: "/api/project/save",
-		contentType: "application/json",
-		async: true,
-		success: function(data, res) {
-			ajaxLoadEnd()
-			if(data.code === '0') {
-				//showInfo("保存成功")
-				dialogContentsClose()
-				$('#contentsGrid').datagrid("reload");
-				query()
-			} else {
-				showError(data.description)
-			}
-		},
-		error: function(res) {
-			ajaxLoadEnd()
-			showError("访问服务错误")
-		}
-	});
 }
 
-function findRoleDetail() {
-
-	var row = $('#orgContentsGrid').datagrid("getSelected");
-	if(row == null) {
-		showError("请选中一行数据")
-	}
-	var url = '/api/role/' + row.id + '?time=' + new Date()
-	$.ajax({
-		type: "GET",
-		url: url,
-		async: true,
-		beforeSend: ajaxLoading,
-		contentType: false, // 告诉jQuery不要去设置Content-Type请求头
-		success: function(data, textStatus) {
-			clearAllParam()
-			ajaxLoadEnd()
-			var code = data.code;
-			var msg = data.description;
-			if(code == 0) {
-				if(isEmpty(data.result)) {
-					showInfo('查询结果为空');
-					return;
-				}
-				var role = data.result;
-				$("#txtRoleId").val(role.id)
-				$("#txtRoleCode").textbox('setValue', role.roleCode)
-				$("#txtRoleName").textbox('setValue', role.roleName)
-				$("#txtDeptId").combotree('setValue', role.deptId)
-				var modulesData = role.modules
-
-				var modulesMap = {}
-				for(var i = 0; i < modulesData.length; i++) {
-					modulesMap[modulesData[i].id] = modulesData[i]
-				}
-				var modules = $(".moduleCheck")
-				for(var i = 0; i < modules.length; i++) {
-					modules[i].checked = false
-					var moduleId = $(modules[i]).attr("moduleid")
-					if(contains(modulesData, moduleId)) {
-						modules[i].checked = true
-							//取功能权限
-						var permissionsNode = $((".permission_") + moduleId)
-						if(permissionsNode === undefined)
-							continue
-						var perData = modulesMap[moduleId].permissions
-						for(var j = 0; j < permissionsNode.length; j++) {
-							permissionsNode[j].checked = false
-							var permission = $(permissionsNode[j]).attr("data")
-
-							if(containsPermission(perData, jQuery.parseJSON(permission).operate)) {
-								permissionsNode[j].checked = true
-							}
-						}
-					}
-
-				}
-			} else {
-				showInfo(msg);
-			}
-		},
-		error: function(XMLHttpRequest, textStatus, errorThrown) {
-			ajaxLoadEnd()
-			showError("访问服务失败");
+function viewContent(id){
+	var url = '/api/project/' + id + '?time=' + new Date()
+	
+	get(url,'','json',function(data){
+		if(isEmpty(data.result)) {
+			showInfo('查询结果为空');
+			return;
 		}
-	});
+		var content = data.result;
+		setDataDetail(content)
+	})
+	$("#detailDialog").dialog('open')
+}
+
+function dialogDetailClose(){
+	
+}
+
+function setDataDetail(data){
+	$("#txtProjectIdDetail").val(data.id)
+	$("#txtProjectNoDetail").textbox('setValue',data.projectNo)
+	$("#txtProjectTypeDetail").val(data.projectTypeName)
+	$("#txtNameDetail").textbox('setValue',data.name)
+	$("#txtDeptIdDetail").textbox('setValue',data.orgId)
+	$("#txtUserDetail").textbox('setValue',data.userName)
+	$("#txtStartTimeDetail").textbox('setValue',data.startTime)
+	$("#txtNoteDetail").val(data.comment)
+	$("#fileUrlDetail").val(data.file)
+	$("#txtIntroductionDetail").val(data.introduction)
+}
+
+function findDetail(id) {
+
+	var url = '/api/project/' + id + '?time=' + new Date()
+	
+	get(url,'','json',function(data){
+		if(isEmpty(data.result)) {
+			showInfo('查询结果为空');
+			return;
+		}
+		var content = data.result;
+		setData(content)
+	})
 }
 
 function deleteData() {
 
-	var row = $('#orgContentsGrid').datagrid("getSelected");
-	if(row == null) {
-		showError("请选中一行数据")
+	var rows = $('#contentsGrid').datagrid("getSelections");
+	if(rows == null || rows.length == 0) {
+		showError("请选中数据")
 	}
-	var url = '/api/role/delete/' + row.id + '?time=' + new Date()
-	$.ajax({
-		type: "DELETE",
-		url: url,
-		async: true,
-		beforeSend: ajaxLoading,
-		contentType: false, // 告诉jQuery不要去设置Content-Type请求头
-		success: function(data, textStatus) {
-			var code = data.code;
-			var msg = data.description;
-			ajaxLoadEnd()
-			if(code == 0) {
-				query()
-			} else {
-				showInfo(msg)
-			}
-		},
-		error: function(XMLHttpRequest, textStatus, errorThrown) {
-			ajaxLoadEnd()
-			showError("访问服务失败");
+	var ids = [];
+	
+	rows.forEach(function(val,index,arr){
+		if("2" === rows[index].status){
+			showError("已提交的数据不能删除")
+			return;
 		}
-	});
+		ids.push(rows[index].id)
+	})
+	var url = '/api/project/del';
+	var param = {ids:ids}
+	post(url,JSON.stringify(param),"json",function(data){
+		$('#contentsGrid').datagrid("reload");
+//		showInfo("删除成功")
+		query()
+	})
 }
 
 function contains(arr, obj) {
@@ -368,22 +326,6 @@ function containsPermission(arr, obj) {
 	return false;
 }
 
-function clearAllParam() {
-	$("#txtRoleId").val("")
-	$("#txtRoleCode").textbox('setValue', '')
-	$("#txtRoleName").textbox('setValue', '')
-	$("#txtDeptId").combotree('setValue', '')
-	var modules = $(".moduleCheck");
-	for(var i = 0; i < modules.length; i++) {
-		modules[i].checked = false
-		var moduleId = $(modules[i]).attr("moduleid")
-			//取功能权限
-		var permissions = $((".permission_") + moduleId)
-		for(var j = 0; j < permissions.length; j++) {
-			permissions[j].checked = false
-		}
-	}
-}
 
 function cancel() {
 	$("#searchRoleCode").textbox('setValue', '')
@@ -395,6 +337,12 @@ function formatOrgData(data) {
 	return data.result;
 }
 
-function operateFormatter(row) {
-	return '<a href="javascript:findContent()" plain="true">详情</a>'
+function operateFormatter(value,row,index) {
+	var id = isEmpty(row) ? null : row.id
+	var status = row.status
+	//提交状态不显示  编辑按钮
+	if(status === '2')
+		return '<a href="javascript:viewContent('+id+')" plain="true">详情</a>'
+	return '<a href="javascript:updateContent('+id+')"  plain="true">编辑</a>'
+	
 }

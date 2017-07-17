@@ -204,18 +204,22 @@ function post(url, param, datat, callback) {
 		contentType:"application/json",
 		success: function(data){
 			if(data.code!=0){
-				alert(data.description)
+				showError(data.description)
+				ajaxLoadEnd()
 				return;
 			}
 			callback(data);
+			ajaxLoadEnd()
 		},  
 		error: function (s) {  
 			showError("访问服务错误");
+			ajaxLoadEnd()
 		},
 		complete:function(XHR, TS){
              	if(XHR.status === 401){
              		location.href='login.html';
              	}
+             	ajaxLoadEnd()
          }
 	});  
 }
@@ -230,7 +234,7 @@ function get(url, param, datat, callback) {
 		contentType:"application/json",
 		success: function(data){
 			if(data.code!=0){
-				alert(data.description)
+				showError(data.description)
 				return;
 			}
 			callback(data);

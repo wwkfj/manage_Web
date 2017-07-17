@@ -143,20 +143,21 @@
 		<!-- 网格按钮栏 -->
 		<div class="gridBtnBar">
 			<a href="javascript:addContents()" class="easyui-linkbutton" iconCls="icon-oto-add" plain="true">新增</a>
-			<a href="javascript:updateContent()" class="easyui-linkbutton" iconCls="icon-oto-edit" plain="true">修改</a>
+			<!--<a href="javascript:updateContent()" class="easyui-linkbutton" iconCls="icon-oto-edit" plain="true">修改</a>-->
 			<a href="javascript:deleteData()" class="easyui-linkbutton" iconCls="icon-oto-delete" plain="true">删除</a>
 		</div>
 		<!-- 网格 -->
-		<table id="contentsGrid" class="easyui-datagrid" style="width:100%;height:100%" data-options="singleSelect:true,pagination:true,remoteSort:false,rownumbers:true">
+		<table id="contentsGrid" class="easyui-datagrid" style="width:100%;height:100%" data-options="singleSelect:false,pagination:true,remoteSort:false">
 			<thead>
 				<tr>
 					<th data-options="field:'ck',checkbox:true"></th>
 					<!--<th data-options="field:'id',width:'4%',sortable:true">序号</th>-->
 					<th data-options="field:'projectNo',width:'10%',sortable:true">项目编号</th>
-					<th data-options="field:'name',width:'15%',sortable:true">项目名称</th>
-					<th data-options="field:'introduction',width:'15%',sortable:true">项目简介</th>
-					<th data-options="field:'userName',width:'15%',sortable:true">负责人</th>
-					<th data-options="field:'orgName',width:'15%',sortable:true">责任部门</th>
+					<th data-options="field:'name',width:'18%',sortable:true">项目名称</th>
+					<th data-options="field:'projectTypeName',width:'8%',sortable:true">项目类别</th>
+					<th data-options="field:'userName',width:'8%',sortable:true">负责人</th>
+					<th data-options="field:'orgName',width:'10%',sortable:true">责任部门</th>
+					<th data-options="field:'introduction',width:'20%',sortable:true">项目简介</th>
 					<th data-options="field:'startTime',width:'18%',sortable:true">开始时间</th>
 					<th data-options="field:'operate',width:'12%',sortable:true,formatter:operateFormatter">操作</th>
 				</tr>
@@ -164,10 +165,11 @@
 		</table>
 		
 		<!--添加内容弹出框-->
-		<div id="contentsDialog" class="easyui-dialog" closed="false" title= "页面内容" style="width:520px;height:460px; " data-options="buttons: '#dlg-buttons',modal:true ">
+		<div id="contentsDialog" class="easyui-dialog" closed="true" title= "页面内容" style="width:520px;height:460px; " data-options="buttons: '#dlg-buttons',modal:true ">
 			<table id="contentsTable" style="padding-left:15px;padding-right:15px; padding-top:10px;">
 				<tr style="margin-bottom: 10px;">
 					<input id="txtProjectId" type="hidden" />
+					<input id="txtProjectType" type="hidden" />
 					<td align="right"><font color="#FF0000">*</font>项目编号</td>
 					<td colspan="3" align="left">
 						<input class="easyui-textbox" id="txtProjectNo" style="width: 394px;" 
@@ -198,7 +200,13 @@
 				<tr style="margin-bottom: 10px;">
 					<td align="right"><font color="#FF0000">*</font>负责人:</td>
 					<td align="left" colspan="3">
-						<input type="text" class="easyui-combobox" id="txtUser" style="width: 394px;" data-options="prompt:'请输入责任名称',editable:true" />
+						<input type="text" class="easyui-combobox" id="txtUser" style="width: 394px;" data-options="prompt:'请输入责任名称',editable:true,url:'/api/org/user/0',
+											method:'get',
+											valueField:'id',
+											textField:'name',
+											loadFilter:function(data){
+												return data.result
+											}" />
 					</td>
 				</tr>
 				<tr style="margin-bottom: 10px;">
@@ -208,14 +216,14 @@
 					</td>
 				</tr>
 				<tr style="margin-bottom: 10px;">
-					<td align="right"><font color="#FF0000">*</font>项目简介:</td>
+					<td align="right"><font color="#FF0000"></font>项目简介:</td>
 					<td align="left" colspan="3">
 						<textarea  id="txtIntroduction" rows="5" style="width: 388px;color:#5F5F5F;" placeholder="请输入项目简介" >
 						</textarea>
 					</td>
 				</tr>
 				<tr style="margin-bottom: 10px;">
-					<td align="right"><font color="#FF0000">*</font>备注:</td>
+					<td align="right"><font color="#FF0000"></font>备注:</td>
 					<td align="left" colspan="3">
 						<textarea  id="txtNote" rows="3" style="width: 388px;color:#5F5F5F;" placeholder="请输入备注" >
 						</textarea>
@@ -223,10 +231,10 @@
 				</tr>
 				<!--文件上传 开始-->
 				<tr style="margin-bottom: 10px;">
-					<td align="right"><font color="#FF0000">*</font>附件:</td>
+					<td align="right"><font color="#FF0000"></font>附件:</td>
 					<td align="left" colspan="2">
 						<input id="fileUrl_1" type="hidden" />
-						<form id="importFileForm" enctype="multipart/form-data">
+						<form id="importFileForm" name="file" enctype="multipart/form-data">
 						<input id="fileImport_1" type="text" class="easyui-filebox" id="file" style="width: 320px;" data-options="prompt:'请选择附件',buttonText:'选择附件',accept:'image/*'" />
 						</form>
 					</td>
@@ -243,10 +251,88 @@
 				<!--文件上传 上传-->
 			</table>
 			
-			
 			<div id="dlg-buttons">
-				<a href="javascript:submit()" class="easyui-linkbutton" iconCls="icon-oto-save">保存</a>
+				<a href="javascript:submit('1')" class="easyui-linkbutton" iconCls="icon-oto-save">保存</a>
+				<a href="javascript:submit('2')" class="easyui-linkbutton" iconCls="icon-oto-submit">提交</a>
 				<a href="javascript:dialogContentsClose()" class="easyui-linkbutton" iconCls="icon-oto-delete">关闭</a>
+			</div>
+		</div>
+		
+		<div id="detailDialog" class="easyui-dialog" closed="false" title= "详情" style="width:520px;height:460px; " data-options="buttons: '#dlg-buttons1',modal:true ">
+			<table id="contentsTableDetail" style="padding-left:15px;padding-right:15px; padding-top:10px;">
+				<tr style="margin-bottom: 10px;">
+					<input id="txtProjectIdDetail" type="hidden" />
+					<input id="txtProjectTypeDetail" type="hidden" />
+					<td align="right"><font color="#FF0000">*</font>项目编号</td>
+					<td colspan="3" align="left">
+						<input class="easyui-textbox" editable='false' id="txtProjectNoDetail" style="width: 394px;" 
+							data-options="prompt:'请输入项目编号',editable:true" />
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>项目名称</td>
+					<td colspan="3" align="left">
+						<input class="easyui-textbox" editable='false' id="txtNameDetail" style="width: 394px;" 
+							data-options="prompt:'请输入项目名称',editable:true" />
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>责任部门:</td>
+					<td align="left" colspan="3">
+						<select id="txtDeptIdDetail" editable='false' class="easyui-textbox" iconCls="" style="width:394px;"
+						         data-options="prompt:'请选择责任部门'">
+						</select>
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>负责人:</td>
+					<td align="left" colspan="3">
+						<input type="text" class="easyui-textbox" id="txtUser" editable='false' style="width: 394px;" data-options="prompt:'请输入责任名称',editable:true,url:'/api/org/user/0',
+											method:'get',
+											valueField:'id',
+											textField:'name',
+											loadFilter:function(data){
+												return data.result
+											}" />
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000">*</font>项目开始时间:</td>
+					<td align="left" colspan="3">
+						<input type="text" class="easyui-textbox" editable='false' id="txtStartTimeDetail" style="width: 394px;" data-options="prompt:'请输入项目开始时间',editable:true" />
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000"></font>项目简介:</td>
+					<td align="left" colspan="3">
+						<textarea  id="txtIntroductionDetail" disabled="disabled" rows="5" style="width: 388px;color:#5F5F5F;border-color: #F2F2F2;" placeholder="请输入项目简介" >
+						</textarea>
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000"></font>备注:</td>
+					<td align="left" colspan="3">
+						<textarea  id="txtNoteDetail" rows="3" style="width: 388px;color:#5F5F5F;border-color: #F2F2F2;" placeholder="请输入备注" >
+						</textarea>
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<input id="fileUrlDetail" type="hidden" />
+					<td align="right"><font color="#FF0000"></font>附件:</td>
+					<td align="left" colspan="1">
+						<a href="javascript:void(0);" id="uploadFile" class="easyui-linkbutton" iconCls="icon-oto-view" >预览</a>
+					</td>
+				</tr>
+				<tr style="margin-bottom: 10px;">
+					<td align="right"><font color="#FF0000"></font></td>
+					<td align="left" colspan="3">
+						<div id="uploadprogressbar" class="easyui-progressbar" style="width:100px; height: 12px;display: none;"></div>  
+					</td>
+				</tr>
+			</table>
+			
+			<div id="dlg-buttons1">
+				<a href="javascript:dialogDetailClose()" class="easyui-linkbutton" iconCls="icon-oto-delete">关闭</a>
 			</div>
 		</div>
 		
