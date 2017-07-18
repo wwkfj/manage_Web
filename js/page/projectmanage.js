@@ -169,7 +169,7 @@ function submit(status) {
 		    orgId:$("#txtDeptId").combobox('getValue'),
 		   userId:$("#txtUser").combobox('getValue'),
 		startTime:$("#txtStartTime").datetimebox('getValue'),
-		   common:$("#txtNote").val(),
+		   comment:$("#txtNote").val(),
 		     file:$("#fileUrl_1").val(),
      introduction:$("#txtIntroduction").val(),
            status:status
@@ -249,8 +249,17 @@ function viewContent(id){
 	$("#detailDialog").dialog('open')
 }
 
+function viewFile(){
+	var fileUrl = $("#fileUrlDetail").val()
+	if(isEmpty(fileUrl)){
+		showError('文件路径参数不存在')
+		return
+	}
+	window.open('../file_view_test.html?source='+fileUrl)
+}
+
 function dialogDetailClose(){
-	
+	$('#detailDialog').dialog('close')
 }
 
 function setDataDetail(data){
@@ -345,4 +354,38 @@ function operateFormatter(value,row,index) {
 		return '<a href="javascript:viewContent('+id+')" plain="true">详情</a>'
 	return '<a href="javascript:updateContent('+id+')"  plain="true">编辑</a>'
 	
+}
+
+
+ //查询要的项目
+function searchProject() {
+
+	var url = "../dialog/ProjectQueryDialog.html?confirmMethod=confirmShop&isSingleSelect=true&needAllshop=false"
+	url = encodeURI(url);
+	$('#iframeDialog').attr('src', url);
+
+	$('#searchtitle').dialog({
+		height: 450,
+		width: 500,
+		title: '选择项目',
+		closed: false
+	});
+}
+
+ //门店弹出框确认后的返回事件
+function confirmShop(rows) {
+	var i = 0;
+	var names;
+	var ids;
+	for (i = 0; i < rows.length; i++) {
+		if (i == 0) {
+			names = rows[0].name;
+			ids = rows[0].id;
+		}
+		if (i != 0) {
+			names = names + "," + rows[i].name;
+			ids = ids + "," + rows[i].id;
+		}
+	}
+	alert(names);
 }

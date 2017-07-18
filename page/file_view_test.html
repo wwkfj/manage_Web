@@ -7,12 +7,16 @@
 		<script src="../js/jquery.media.js"></script>
 	</head>
 	<body>
-		<a class="media" href="http://cdn-test.jxtykj.net/project_file/application/pdf/1500222130033南昌县城投项目管理系统解决方案.pdf">PDF File</a>
+		<a class="media">预览</a>
 		<script>
-			$(function() {  
-		        $('a.media').media({width:800, height:600});  
+			$(function() {
+				var source = location.search.substring(1)
+				var start = source.indexOf('=')+1
+				var sourceUrl = source.substring(start)
+				$('a.media').attr('href',sourceUrl)
+				var height = $(window).height()-20
+		        $('a.media').media({width:'100%', height:height});  
 		    });  
-//			var url = 'http://cdn-test.jxtykj.net/project_file/application/pdf/1500222130033南昌县城投项目管理系统解决方案.pdf';
 		</script>
 	</body>
 </html>

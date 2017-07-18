@@ -250,4 +250,32 @@ function get(url, param, datat, callback) {
 	});  
 }
 
+/*
+ * 获取URL参数
+ * 传入：key
+ * 返回：value
+ */
+function getQueryParam(key) {
+	var reg = new RegExp("(^|&)" + key + "=([^&]*)(&|$)");
+	var r = window.location.search.substr(1).match(reg);
+
+	if (r != null)
+		return r[2];
+	return null;
+}
+
+/**
+ * 初始化下拉列表
+ */
+function initCombobox(keyword, id) {
+		var wordBook = getWordBookByKeyword(keyword);
+		if (wordBook != null) {
+			$('#' + id).combobox({
+			data: wordBook,
+			valueField: 'wordValue',
+			textField: 'wordDisplay'
+		});
+	}
+}
+
 
