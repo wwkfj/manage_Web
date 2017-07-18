@@ -360,7 +360,7 @@ function operateFormatter(value,row,index) {
  //查询要的项目
 function searchProject() {
 
-	var url = "../dialog/ProjectQueryDialog.html?confirmMethod=confirmShop&isSingleSelect=true&needAllshop=false"
+	var url = "../dialog/ProjectQueryDialog.html?confirmMethod=confirmProject&isSingleSelect=true&needAllshop=false"
 	url = encodeURI(url);
 	$('#iframeDialog').attr('src', url);
 
@@ -372,8 +372,8 @@ function searchProject() {
 	});
 }
 
- //门店弹出框确认后的返回事件
-function confirmShop(rows) {
+ //弹出框确认后的返回事件
+function confirmProject(rows) {
 	var i = 0;
 	var names;
 	var ids;
